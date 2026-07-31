@@ -39,6 +39,35 @@
             font-size: 14px;
         }
         
+        /* User Info Form */
+        .user-form {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        
+        .user-form input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .user-form input:focus {
+            border-color: #6a3de8;
+            outline: none;
+        }
+        
+        .user-form .row-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
         .product-card {
             background: white;
             border-radius: 12px;
@@ -362,6 +391,7 @@
         @media (max-width: 480px) {
             body { padding: 12px; }
             .header { border-radius: 0; margin: -12px -12px 20px -12px; }
+            .user-form .row-input { grid-template-columns: 1fr; }
         }
         
         .btn-group {
@@ -381,6 +411,15 @@
         <h1>🛍️ StoreKu</h1>
         <p>Bayar pakai QRIS - Scan & Selesai!</p>
         <div class="saldo">💰 Saldo: <span id="balanceDisplay">Rp 0</span></div>
+    </div>
+    
+    <!-- User Info Form -->
+    <div class="user-form">
+        <div class="row-input">
+            <input type="text" id="userName" placeholder="Nama lengkap" value="nurhafid">
+            <input type="text" id="userPhone" placeholder="No. HP" value="085754535558">
+        </div>
+        <input type="email" id="userEmail" placeholder="Email" value="astanurul99@gmail.com">
     </div>
     
     <!-- Products -->
@@ -533,6 +572,16 @@ function updateTotal() {
     document.getElementById('total').textContent = `Rp ${total.toLocaleString('id-ID')}`;
     
     return { subtotal, fee, total, items };
+}
+
+// ============ GET USER INFO ============
+function getUserInfo() {
+    return {
+        username: document.getElementById('userName').value || 'nurhafid',
+        name: document.getElementById('userName').value || 'nurhafid',
+        email: document.getElementById('userEmail').value || 'astanurul99@gmail.com',
+        phone: document.getElementById('userPhone').value || '085754535558'
+    };
 }
 
 // ============ ORDERS ============
@@ -736,7 +785,6 @@ async function cekStatusInternal() {
             badge.textContent = `✅ Pembayaran Berhasil!`;
             badge.className = 'status-badge success';
             
-            // Tampilkan bukti
             showReceipt(data);
             
             if (pollingInterval) {
@@ -809,6 +857,7 @@ async function buatPembayaran() {
     const btn = document.getElementById('btnBayar');
     const totalData = updateTotal();
     const amount = totalData.total;
+    const user = getUserInfo();
     
     if (amount < 1000) {
         showToast('⚠️ Minimal transaksi Rp 1.000', 'error');
@@ -840,7 +889,11 @@ async function buatPembayaran() {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount })
+            body: JSON.stringify({ 
+                amount: amount,
+                user: user,
+                items: totalData.items
+            })
         });
         
         const data = await response.json();
@@ -860,7 +913,9 @@ async function buatPembayaran() {
                 id: data.deposit_id,
                 total: data.total || amount,
                 items: totalData.items.map(i => `${i.name} x${i.qty}`).join(', '),
-                status: 'pending'
+                status: 'pending',
+                user: user.name,
+                invoice: data.invoice_id || '-'
             });
             saveOrders();
             renderOrders();
@@ -898,7 +953,6 @@ async function buatPembayaran() {
 }
 
 // ============ INIT ============
-// Select all products by default
 document.querySelectorAll('.product-card').forEach(c => c.classList.add('selected'));
 
 updateTotal();
@@ -907,6 +961,7 @@ loadOrders();
 console.log('🛍️ Store siap!');
 console.log('💳 Bayar dulu, proses otomatis!');
 console.log('❌ Bisa cancel deposit kalo belum bayar.');
+console.log('👤 Tracking user aktif!');
 </script>
 </body>
 </html>
