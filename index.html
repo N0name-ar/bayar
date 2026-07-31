@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Pembayaran QRIS</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        #qr-container { margin-top: 20px; }
+        img { max-width: 300px; border: 1px solid #ccc; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>Test Pembayaran Bisapay</h1>
+    <button onclick="buatPembayaran()">Klik Bayar 5.000</button>
+
+    <div id="qr-container">
+        <p id="status"></p>
+        <div id="qr-image"></div>
+    </div>
+
+    <script>
+        async function buatPembayaran() {
+            const status = document.getElementById('status');
+            const qrImage = document.getElementById('qr-image');
+            
+            status.innerText = "Memproses request ke server...";
+            qrImage.innerHTML = "";
+
+            try {
+                // Panggil URL Edge Function kamu
+                const response = await fetch('https://bdehqzvzmtpvamcbyfmx.supabase.co/functions/v1/deposit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: 5000 })
+                });
+
+                const data = await response.json();
+
+                if (data.qr_image) {
+                    status.innerText = "QRIS Berhasil didapat! (ID: " + data.deposit_id + ")";
+                    qrImage.innerHTML = `<img src="${data.qr_image}" alt="QRIS">`;
+                } else {
+                    status.innerText = "Gagal: " + JSON.stringify(data);
+                }
+            } catch (error) {
+                status.innerText = "Error: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
