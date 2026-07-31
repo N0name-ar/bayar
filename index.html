@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StoreKu - QRIS Payment</title>
+    <title>Web Store - QRIS Payment</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -26,49 +26,17 @@
             border-radius: 16px;
             margin-bottom: 20px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
         }
         
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-            animation: shimmer 10s infinite linear;
-        }
-        
-        @keyframes shimmer {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .header h1 { 
-            font-size: 24px; 
-            position: relative;
-            z-index: 1;
-        }
-        .header p { 
-            opacity: 0.9; 
-            margin-top: 5px; 
-            font-size: 14px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .header .balance {
-            position: relative;
-            z-index: 1;
-            margin-top: 12px;
-            padding: 8px 16px;
+        .header h1 { font-size: 24px; }
+        .header p { opacity: 0.9; margin-top: 4px; font-size: 14px; }
+        .header .saldo {
+            margin-top: 10px;
+            padding: 6px 16px;
             background: rgba(255,255,255,0.2);
             border-radius: 20px;
             display: inline-block;
             font-size: 14px;
-            backdrop-filter: blur(10px);
         }
         
         .product-card {
@@ -80,20 +48,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 2px solid transparent;
             transition: all 0.3s;
             cursor: pointer;
-            border: 2px solid transparent;
         }
         
-        .product-card:hover {
-            border-color: #6a3de8;
-            transform: translateX(4px);
-        }
-        
-        .product-card.selected {
-            border-color: #6a3de8;
-            background: #f8f5ff;
-        }
+        .product-card:hover { border-color: #6a3de8; }
+        .product-card.selected { border-color: #6a3de8; background: #f8f5ff; }
         
         .product-info h3 { font-size: 16px; }
         .product-info p { font-size: 13px; color: #666; }
@@ -124,7 +85,7 @@
         }
         
         .product-qty span {
-            min-width: 20px;
+            min-width: 24px;
             text-align: center;
             font-weight: 600;
         }
@@ -140,7 +101,7 @@
         .total-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 6px 0;
         }
         
         .total-row.total {
@@ -148,7 +109,7 @@
             margin-top: 8px;
             padding-top: 12px;
             font-weight: 700;
-            font-size: 18px;
+            font-size: 20px;
             color: #6a3de8;
         }
         
@@ -163,17 +124,11 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
         }
         
         .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(106, 61, 232, 0.35);
-        }
-        
-        .btn-primary:active:not(:disabled) {
-            transform: translateY(0);
         }
         
         .btn-primary:disabled {
@@ -195,9 +150,13 @@
             transition: all 0.3s;
         }
         
-        .btn-secondary:hover {
-            background: #e0e0e0;
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-danger {
+            background: #ffebee;
+            color: #b71c1c;
+            border: 1px solid #ef9a9a;
         }
+        .btn-danger:hover { background: #ffcdd2; }
         
         .qr-section {
             background: white;
@@ -210,24 +169,18 @@
             animation: fadeIn 0.5s ease;
         }
         
+        .qr-section.show { display: block; }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .qr-section.show { display: block; }
-        
         .qr-section img {
-            max-width: 280px;
+            max-width: 260px;
             width: 100%;
             border-radius: 12px;
             border: 3px solid #f0f0f0;
-            transition: all 0.3s;
-        }
-        
-        .qr-section img:hover {
-            transform: scale(1.02);
-            border-color: #6a3de8;
         }
         
         .qr-info {
@@ -236,10 +189,7 @@
             color: #555;
         }
         
-        .qr-info .highlight {
-            color: #6a3de8;
-            font-weight: 600;
-        }
+        .qr-info .highlight { color: #6a3de8; font-weight: 600; }
         
         .status-badge {
             display: inline-block;
@@ -248,17 +198,12 @@
             font-size: 13px;
             font-weight: 600;
             margin-top: 8px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
         }
         
         .status-badge.pending {
             background: #fff3e0;
             color: #e65100;
+            animation: pulse 2s infinite;
         }
         
         .status-badge.success {
@@ -273,6 +218,66 @@
             animation: none;
         }
         
+        .status-badge.processing {
+            background: #e3f2fd;
+            color: #0d47a1;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .countdown {
+            font-size: 13px;
+            color: #e65100;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        
+        .countdown.expired { color: #b71c1c; }
+        
+        .receipt-box {
+            background: #e8f5e9;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 12px;
+            text-align: left;
+        }
+        
+        .receipt-box h4 {
+            color: #1b5e20;
+            margin-bottom: 8px;
+        }
+        
+        .receipt-box hr {
+            margin: 8px 0;
+            border-color: #a5d6a7;
+        }
+        
+        .receipt-box .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .receipt-box .row strong { color: #1b5e20; }
+        
+        .success-animation {
+            display: none;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 12px;
+            margin-top: 16px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .success-animation.show { display: block; }
+        .success-animation .check { font-size: 48px; color: #43a047; display: block; margin-bottom: 8px; }
+        
         .order-history {
             margin-top: 24px;
             background: white;
@@ -286,13 +291,6 @@
             color: #333;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-        
-        .order-history h4 .count {
-            font-size: 12px;
-            color: #999;
-            font-weight: 400;
         }
         
         .order-item {
@@ -306,10 +304,7 @@
         
         .order-item:last-child { border-bottom: none; }
         
-        .order-status {
-            font-weight: 600;
-        }
-        
+        .order-status { font-weight: 600; }
         .order-status.pending { color: #e65100; }
         .order-status.success { color: #1b5e20; }
         .order-status.expired { color: #b71c1c; }
@@ -332,16 +327,11 @@
         .toast.success { background: #43a047; }
         .toast.error { background: #e53935; }
         .toast.info { background: #6a3de8; }
+        .toast.warning { background: #f57c00; }
         
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @media (max-width: 480px) {
-            body { padding: 12px; }
-            .container { padding: 0; }
-            .header { border-radius: 0; margin: -12px -12px 20px -12px; }
         }
         
         .loader {
@@ -367,23 +357,20 @@
             color: #999;
         }
         
-        .empty-state icon {
-            font-size: 40px;
-            display: block;
-            margin-bottom: 10px;
+        .empty-state icon { font-size: 40px; display: block; margin-bottom: 10px; }
+        
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .header { border-radius: 0; margin: -12px -12px 20px -12px; }
         }
         
-        /* Countdown timer */
-        .countdown {
-            font-size: 13px;
-            color: #e65100;
+        .btn-group {
+            display: flex;
+            gap: 8px;
             margin-top: 8px;
-            font-weight: 600;
         }
         
-        .countdown.expired {
-            color: #b71c1c;
-        }
+        .btn-group button { flex: 1; margin-top: 0; }
     </style>
 </head>
 <body>
@@ -393,14 +380,12 @@
     <div class="header">
         <h1>🛍️ StoreKu</h1>
         <p>Bayar pakai QRIS - Scan & Selesai!</p>
-        <div class="balance">
-            💰 Saldo: <span id="balanceDisplay">Rp 0</span>
-        </div>
+        <div class="saldo">💰 Saldo: <span id="balanceDisplay">Rp 0</span></div>
     </div>
     
     <!-- Products -->
     <div id="products">
-        <div class="product-card" data-price="25000" onclick="selectProduct(this)">
+        <div class="product-card selected" data-price="25000" data-name="Product A" onclick="selectProduct(this)">
             <div class="product-info">
                 <h3>Product A</h3>
                 <p>Kategori: Elektronik</p>
@@ -415,7 +400,7 @@
             </div>
         </div>
         
-        <div class="product-card" data-price="15000" onclick="selectProduct(this)">
+        <div class="product-card selected" data-price="15000" data-name="Product B" onclick="selectProduct(this)">
             <div class="product-info">
                 <h3>Product B</h3>
                 <p>Kategori: Fashion</p>
@@ -439,11 +424,11 @@
         </div>
         <div class="total-row">
             <span>Biaya Layanan</span>
-            <span id="fee">Rp 0</span>
+            <span id="fee">Rp 76</span>
         </div>
         <div class="total-row total">
             <span>Total Bayar</span>
-            <span id="total">Rp 40.000</span>
+            <span id="total">Rp 40.076</span>
         </div>
     </div>
     
@@ -451,9 +436,11 @@
     <button class="btn-primary" id="btnBayar" onclick="buatPembayaran()">
         💳 Bayar dengan QRIS
     </button>
-    <button class="btn-secondary" onclick="cekStatus()">
-        🔄 Cek Status Pembayaran
-    </button>
+    
+    <div class="btn-group">
+        <button class="btn-secondary" onclick="cekStatus()">🔄 Cek Status</button>
+        <button class="btn-secondary btn-danger" onclick="cancelDeposit()">❌ Batal</button>
+    </div>
     
     <!-- QR Section -->
     <div class="qr-section" id="qrSection">
@@ -464,8 +451,22 @@
             <span class="status-badge pending" id="statusBadge">⏳ Menunggu Pembayaran</span>
             <div class="countdown" id="countdown">⏱️ Sisa waktu: 59:59</div>
             <p style="font-size:12px;color:#999;margin-top:8px;">
-                Scan menggunakan aplikasi QRIS (OVO, Gopay, DANA, dll)
+                Scan menggunakan aplikasi QRIS (OVO, Gopay, DANA)
             </p>
+        </div>
+        
+        <!-- Receipt / Bukti Pembayaran -->
+        <div id="receiptBox"></div>
+        
+        <!-- Success Animation -->
+        <div class="success-animation" id="successAnimation">
+            <span class="check">✅</span>
+            <h3 style="color:#1b5e20;">Pembayaran Berhasil!</h3>
+            <p style="color:#555;margin-top:4px;">Order sedang diproses...</p>
+            <div style="margin-top:12px;">
+                <span class="loader" style="border-color: #43a047;"></span>
+                <span style="font-size:14px;color:#555;">Memproses order...</span>
+            </div>
         </div>
     </div>
     
@@ -473,7 +474,7 @@
     <div class="order-history">
         <h4>
             📋 Riwayat Transaksi
-            <span class="count" id="orderCount">0 transaksi</span>
+            <span id="orderCount">0 transaksi</span>
         </h4>
         <div id="orderList">
             <div class="empty-state">
@@ -492,46 +493,55 @@ const API_URL = 'https://bdehqzvzmtpvamcbyfmx.supabase.co/functions/v1/deposit';
 let currentDepositId = null;
 let pollingInterval = null;
 let countdownInterval = null;
-let countdownSeconds = 3600; // 1 jam
+let countdownSeconds = 3600;
 let orders = [];
+let isProcessing = false;
 
-// ============ PRODUCT QTY ============
+// ============ PRODUCT FUNCTIONS ============
+function selectProduct(card) {
+    card.classList.toggle('selected');
+    updateTotal();
+}
+
 function updateQty(btn, delta) {
     const card = btn.closest('.product-card');
     const span = card.querySelector('.product-qty span');
     let qty = parseInt(span.textContent) + delta;
     if (qty < 1) qty = 1;
     span.textContent = qty;
-    updateTotal();
-}
-
-function selectProduct(card) {
-    card.classList.toggle('selected');
+    card.classList.add('selected');
     updateTotal();
 }
 
 function updateTotal() {
     let subtotal = 0;
+    let items = [];
+    
     document.querySelectorAll('.product-card.selected').forEach(card => {
         const price = parseInt(card.dataset.price);
         const qty = parseInt(card.querySelector('.product-qty span').textContent);
+        const name = card.dataset.name;
         subtotal += price * qty;
+        items.push({ name, qty, price });
     });
     
-    const fee = subtotal > 0 ? Math.round(subtotal * 0.02) : 0; // 2% fee
+    const fee = subtotal > 0 ? Math.round(subtotal * 0.02) : 0;
     const total = subtotal + fee;
     
     document.getElementById('subtotal').textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
     document.getElementById('fee').textContent = `Rp ${fee.toLocaleString('id-ID')}`;
     document.getElementById('total').textContent = `Rp ${total.toLocaleString('id-ID')}`;
+    
+    return { subtotal, fee, total, items };
 }
 
-// ============ LOAD ORDERS FROM LOCALSTORAGE ============
+// ============ ORDERS ============
 function loadOrders() {
     try {
         const saved = localStorage.getItem('orders');
         if (saved) orders = JSON.parse(saved);
         renderOrders();
+        updateBalance();
     } catch {}
 }
 
@@ -548,21 +558,26 @@ function renderOrders() {
     count.textContent = `${orders.length} transaksi`;
     
     if (orders.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <icon>🛒</icon>
-                <p>Belum ada transaksi</p>
-            </div>
-        `;
+        container.innerHTML = `<div class="empty-state"><icon>🛒</icon><p>Belum ada transaksi</p></div>`;
         return;
     }
     
     container.innerHTML = orders.slice(-5).reverse().map(order => `
         <div class="order-item">
-            <span>#${order.id} - Rp ${order.total.toLocaleString('id-ID')}</span>
-            <span class="order-status ${order.status}">${order.status === 'success' ? '✅ Sukses' : order.status === 'expired' ? '⏰ Expired' : '⏳ Pending'}</span>
+            <span>#${order.id} - ${order.items || 'Produk'} - Rp ${order.total.toLocaleString('id-ID')}</span>
+            <span class="order-status ${order.status}">${getStatusText(order.status)}</span>
         </div>
     `).join('');
+}
+
+function getStatusText(status) {
+    const map = { 'pending': '⏳ Pending', 'success': '✅ Sukses', 'expired': '⏰ Expired' };
+    return map[status] || status;
+}
+
+function updateBalance() {
+    const totalSuccess = orders.filter(o => o.status === 'success').reduce((sum, o) => sum + o.total, 0);
+    document.getElementById('balanceDisplay').textContent = `Rp ${totalSuccess.toLocaleString('id-ID')}`;
 }
 
 // ============ TOAST ============
@@ -571,13 +586,15 @@ function showToast(message, type = 'info') {
     toast.textContent = message;
     toast.className = `toast ${type}`;
     toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    setTimeout(() => { toast.style.display = 'none'; }, 4000);
 }
 
 // ============ COUNTDOWN ============
 function startCountdown() {
     countdownSeconds = 3600;
     clearInterval(countdownInterval);
+    document.getElementById('countdown').className = 'countdown';
+    document.getElementById('countdown').style.color = '#e65100';
     
     countdownInterval = setInterval(() => {
         countdownSeconds--;
@@ -588,9 +605,7 @@ function startCountdown() {
         const el = document.getElementById('countdown');
         el.textContent = `⏱️ Sisa waktu: ${display}`;
         
-        if (countdownSeconds <= 300) {
-            el.style.color = '#e53935';
-        }
+        if (countdownSeconds <= 300) el.style.color = '#e53935';
         
         if (countdownSeconds <= 0) {
             clearInterval(countdownInterval);
@@ -602,14 +617,206 @@ function startCountdown() {
     }, 1000);
 }
 
+// ============ CANCEL DEPOSIT ============
+async function cancelDeposit() {
+    if (!currentDepositId) {
+        showToast('⚠️ Tidak ada deposit aktif', 'warning');
+        return;
+    }
+    
+    if (!confirm(`Yakin batalkan deposit #${currentDepositId}?`)) return;
+    
+    try {
+        showToast('⏳ Membatalkan deposit...', 'info');
+        
+        const response = await fetch(`${API_URL}?cancel=${currentDepositId}`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(`✅ ${data.message}`, 'success');
+            
+            const order = orders.find(o => o.id === currentDepositId);
+            if (order) { order.status = 'expired'; saveOrders(); renderOrders(); }
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            setTimeout(() => {
+                document.getElementById('qrSection').classList.remove('show');
+                currentDepositId = null;
+            }, 2000);
+        } else {
+            showToast(`❌ ${data.error || 'Gagal batalkan'}`, 'error');
+        }
+    } catch (error) {
+        showToast(`❌ ${error.message}`, 'error');
+    }
+}
+
+// ============ SHOW RECEIPT ============
+function showReceipt(data) {
+    const box = document.getElementById('receiptBox');
+    box.innerHTML = `
+        <div class="receipt-box">
+            <h4>✅ PEMBAYARAN BERHASIL!</h4>
+            <hr>
+            <div class="row"><strong>ID Deposit:</strong> <span>#${data.deposit_id}</span></div>
+            <div class="row"><strong>Invoice:</strong> <span>${data.invoice_id || '-'}</span></div>
+            <div class="row"><strong>Nominal:</strong> <span>${data.amount_str || 'Rp ' + data.amount?.toLocaleString('id-ID')}</span></div>
+            <div class="row"><strong>Metode:</strong> <span>${data.payment || 'QRIS ALL PAYMENT'}</span></div>
+            <div class="row"><strong>Tanggal:</strong> <span>${data.date || new Date().toLocaleString('id-ID')}</span></div>
+            <div class="row"><strong>Saldo Akhir:</strong> <span>${data.balance_str || 'Rp ' + data.balance?.toLocaleString('id-ID')}</span></div>
+            <hr>
+            <div style="font-size:13px;color:#1b5e20;text-align:center;">✅ Status: <strong>SUKSES</strong></div>
+        </div>
+    `;
+}
+
+// ============ PROSES ORDER ============
+async function prosesOrder(depositId, total, items, balance, receipt) {
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    console.log('🔄 PROSES ORDER #' + depositId);
+    console.log('📦 Items:', items);
+    console.log('💰 Total:', total);
+    console.log('💵 Saldo:', balance);
+    
+    document.getElementById('statusBadge').textContent = '🔄 Memproses Order...';
+    document.getElementById('statusBadge').className = 'status-badge processing';
+    document.getElementById('successAnimation').classList.add('show');
+    
+    const order = orders.find(o => o.id === depositId);
+    if (order) {
+        order.status = 'success';
+        order.items = items.map(i => `${i.name} x${i.qty}`).join(', ');
+        order.balance = balance;
+        order.receipt = receipt;
+        saveOrders();
+        renderOrders();
+        updateBalance();
+    }
+    
+    showToast(`🎉 Order #${depositId} BERHASIL!`, 'success');
+    
+    setTimeout(() => {
+        document.getElementById('qrSection').classList.remove('show');
+        document.getElementById('successAnimation').classList.remove('show');
+        currentDepositId = null;
+        isProcessing = false;
+    }, 8000);
+}
+
+// ============ CEK STATUS INTERNAL ============
+async function cekStatusInternal() {
+    if (!currentDepositId || isProcessing) return;
+    
+    try {
+        const response = await fetch(`${API_URL}?check=${currentDepositId}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        const data = await response.json();
+        const badge = document.getElementById('statusBadge');
+        
+        console.log('📊 Status:', data);
+        
+        // ✅ SUKSES!
+        if (data.status === 'success' || data.is_success === true) {
+            badge.textContent = `✅ Pembayaran Berhasil!`;
+            badge.className = 'status-badge success';
+            
+            // Tampilkan bukti
+            showReceipt(data);
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            const totalData = updateTotal();
+            await prosesOrder(
+                data.deposit_id,
+                data.amount || totalData.total,
+                totalData.items,
+                data.balance || 0,
+                data
+            );
+            return;
+        }
+        
+        // ⏰ EXPIRED
+        if (data.status === 'expired') {
+            badge.textContent = '⏰ QR Expired!';
+            badge.className = 'status-badge expired';
+            
+            const order = orders.find(o => o.id === currentDepositId);
+            if (order) { order.status = 'expired'; saveOrders(); renderOrders(); }
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            setTimeout(() => {
+                document.getElementById('qrSection').classList.remove('show');
+                currentDepositId = null;
+            }, 5000);
+            return;
+        }
+        
+        // ⏳ PENDING
+        if (data.status === 'pending' || data.status === 'WP') {
+            badge.textContent = '⏳ Menunggu Pembayaran...';
+            badge.className = 'status-badge pending';
+        }
+        
+    } catch (error) {
+        console.log('Cek status error:', error);
+    }
+}
+
+// ============ CEK STATUS MANUAL ============
+async function cekStatus() {
+    if (!currentDepositId) {
+        showToast('⚠️ Belum ada deposit aktif!', 'warning');
+        return;
+    }
+    showToast('⏳ Mengecek status...', 'info');
+    await cekStatusInternal();
+}
+
 // ============ CREATE PAYMENT ============
 async function buatPembayaran() {
     const btn = document.getElementById('btnBayar');
-    const totalText = document.getElementById('total').textContent;
-    const amount = parseInt(totalText.replace(/[^0-9]/g, '')) || 40000;
+    const totalData = updateTotal();
+    const amount = totalData.total;
     
     if (amount < 1000) {
         showToast('⚠️ Minimal transaksi Rp 1.000', 'error');
+        return;
+    }
+    
+    if (totalData.items.length === 0) {
+        showToast('⚠️ Pilih produk dulu!', 'warning');
         return;
     }
     
@@ -617,6 +824,8 @@ async function buatPembayaran() {
     btn.innerHTML = '<span class="loader"></span> Memproses...';
     
     document.getElementById('qrSection').classList.remove('show');
+    document.getElementById('receiptBox').innerHTML = '';
+    document.getElementById('successAnimation').classList.remove('show');
     
     if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -647,6 +856,15 @@ async function buatPembayaran() {
         if (data.qr_image && data.deposit_id) {
             currentDepositId = data.deposit_id;
             
+            orders.push({
+                id: data.deposit_id,
+                total: data.total || amount,
+                items: totalData.items.map(i => `${i.name} x${i.qty}`).join(', '),
+                status: 'pending'
+            });
+            saveOrders();
+            renderOrders();
+            
             const section = document.getElementById('qrSection');
             section.classList.add('show');
             
@@ -658,19 +876,13 @@ async function buatPembayaran() {
             document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
             document.getElementById('statusBadge').className = 'status-badge pending';
             
-            // Start countdown
             startCountdown();
             
-            // Auto polling
             pollingInterval = setInterval(async () => {
                 await cekStatusInternal();
-            }, 10000);
+            }, 8000);
             
-            showToast(`✅ Deposit #${data.deposit_id} berhasil dibuat!`, 'success');
-            
-            orders.push({ id: data.deposit_id, total: data.total || amount, status: 'pending' });
-            saveOrders();
-            renderOrders();
+            showToast(`✅ Deposit #${data.deposit_id} berhasil dibuat! Scan QR untuk bayar.`, 'success');
             
         } else {
             throw new Error('Response tidak valid');
@@ -685,95 +897,16 @@ async function buatPembayaran() {
     }
 }
 
-// ============ CEK STATUS INTERNAL ============
-async function cekStatusInternal() {
-    if (!currentDepositId) return;
-    
-    try {
-        const response = await fetch(`${API_URL}?check=${currentDepositId}`, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
-        
-        const data = await response.json();
-        const badge = document.getElementById('statusBadge');
-        
-        if (data.status === 'success' || data.status === 'confirmed') {
-            badge.textContent = '✅ Pembayaran Berhasil!';
-            badge.className = 'status-badge success';
-            showToast('🎉 Pembayaran berhasil dikonfirmasi!', 'success');
-            
-            const order = orders.find(o => o.id === currentDepositId);
-            if (order) { order.status = 'success'; saveOrders(); renderOrders(); }
-            
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-            }
-            
-            // Update saldo
-            updateBalance();
-            
-            setTimeout(() => {
-                document.getElementById('qrSection').classList.remove('show');
-                currentDepositId = null;
-            }, 5000);
-            
-        } else if (data.status === 'pending' || data.status === 'WP') {
-            badge.textContent = '⏳ Menunggu Pembayaran...';
-            badge.className = 'status-badge pending';
-        } else if (data.status === 'expired') {
-            badge.textContent = '⏰ QR Expired! Buat ulang.';
-            badge.className = 'status-badge expired';
-            
-            const order = orders.find(o => o.id === currentDepositId);
-            if (order) { order.status = 'expired'; saveOrders(); renderOrders(); }
-            
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-            }
-        }
-        
-    } catch (error) {
-        console.log('Cek status error:', error);
-    }
-}
-
-// ============ CEK STATUS MANUAL ============
-async function cekStatus() {
-    if (!currentDepositId) {
-        showToast('⚠️ Belum ada deposit aktif!', 'info');
-        return;
-    }
-    
-    showToast('⏳ Mengecek status...', 'info');
-    await cekStatusInternal();
-}
-
-// ============ UPDATE BALANCE ============
-function updateBalance() {
-    const totalSuccess = orders
-        .filter(o => o.status === 'success')
-        .reduce((sum, o) => sum + o.total, 0);
-    document.getElementById('balanceDisplay').textContent = `Rp ${totalSuccess.toLocaleString('id-ID')}`;
-}
-
 // ============ INIT ============
-loadOrders();
-updateBalance();
-updateTotal();
+// Select all products by default
+document.querySelectorAll('.product-card').forEach(c => c.classList.add('selected'));
 
-console.log('🛍️ Store siap! QRIS payment siap digunakan.');
-console.log('📱 Scan QR dengan OVO, Gopay, DANA, atau aplikasi QRIS lainnya.');
+updateTotal();
+loadOrders();
+
+console.log('🛍️ Store siap!');
+console.log('💳 Bayar dulu, proses otomatis!');
+console.log('❌ Bisa cancel deposit kalo belum bayar.');
 </script>
 </body>
 </html>
