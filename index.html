@@ -1,359 +1,747 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deposit QRIS</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
         .container {
+            max-width: 450px;
+            width: 100%;
             background: white;
-            padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
-        input {
-            width: 100%;
-            padding: 15px;
-            font-size: 20px;
+        .header {
             text-align: center;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            margin: 10px 0;
+            margin-bottom: 24px;
         }
-        input:focus { border-color: #6a3de8; outline: none; }
-        button {
-            width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            background: #6a3de8;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        button:disabled { background: #ccc; }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .btn-group button {
-            flex: 1;
-            background: #f0f0f0;
+        .header h1 {
+            font-size: 24px;
             color: #333;
         }
-        .btn-group .batal { background: #ffebee; color: #b71c1c; }
-        .btn-qr {
-            background: #ff6f00;
+        .header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 18px;
+            text-align: center;
+            transition: border 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #6a3de8;
+            outline: none;
+        }
+        .fee-info {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 4px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: #6a3de8;
             color: white;
-            padding: 15px;
             border: none;
             border-radius: 10px;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
+            transition: all 0.3s;
         }
-        .btn-qr:hover { background: #e65100; }
+        .btn-primary:hover:not(:disabled) {
+            background: #5a2fd4;
+            transform: translateY(-2px);
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn-group button {
+            flex: 1;
+            margin-top: 0;
+        }
+        .btn-secondary {
+            width: 100%;
+            padding: 10px;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .btn-danger {
+            background: #ffebee;
+            color: #b71c1c;
+            border: 1px solid #ef9a9a;
+        }
+        .btn-danger:hover {
+            background: #ffcdd2;
+        }
+        .btn-refresh {
+            background: #e3f2fd;
+            color: #0d47a1;
+            border: 1px solid #90caf9;
+        }
+        .btn-refresh:hover {
+            background: #bbdefb;
+        }
+
+        /* QR SECTION */
+        .qr-section {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease;
+        }
+        .qr-section.show {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .qr-section img {
+            max-width: 240px;
+            width: 100%;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            background: white;
+        }
+        .qr-error {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 8px;
+            color: #e65100;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .qr-info {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #555;
+        }
+        .qr-info .highlight {
+            color: #6a3de8;
+            font-weight: 600;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .status-badge.pending {
+            background: #fff3e0;
+            color: #e65100;
+            animation: pulse 2s infinite;
+        }
+        .status-badge.success {
+            background: #e8f5e9;
+            color: #1b5e20;
+            animation: none;
+        }
+        .status-badge.expired {
+            background: #ffebee;
+            color: #b71c1c;
+            animation: none;
+        }
+        .status-badge.processing {
+            background: #e3f2fd;
+            color: #0d47a1;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+        .countdown {
+            font-size: 13px;
+            color: #e65100;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        .countdown.expired {
+            color: #b71c1c;
+        }
+        .receipt-box {
+            background: #e8f5e9;
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 12px;
+            text-align: left;
+        }
+        .receipt-box .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 14px;
+        }
+        .receipt-box .row strong {
+            color: #1b5e20;
+        }
+
+        /* TOAST */
         .toast {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
-            border-radius: 10px;
+            padding: 14px 24px;
+            border-radius: 12px;
             color: white;
-            display: none;
+            font-weight: 500;
             z-index: 999;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 90%;
+            text-align: center;
         }
-        .toast.success { background: #43a047; }
-        .toast.error { background: #e53935; }
-        .toast.info { background: #6a3de8; }
-        .fee { font-size: 12px; color: #999; margin-bottom: 10px; }
-        .pending-text { color: #e65100; }
-        .success-text { color: #1b5e20; }
-        .expired-text { color: #b71c1c; }
-        #statusBadge { font-weight: bold; margin-top: 16px; }
+        .toast.success {
+            background: #43a047;
+        }
+        .toast.error {
+            background: #e53935;
+        }
+        .toast.info {
+            background: #6a3de8;
+        }
+        .toast.warning {
+            background: #f57c00;
+        }
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            animation: spin 1s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* HISTORY */
         .history {
             margin-top: 20px;
-            border-top: 1px solid #eee;
             padding-top: 16px;
-            text-align: left;
+            border-top: 1px solid #eee;
+        }
+        .history h4 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
         }
         .history-item {
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 6px 0;
+            font-size: 13px;
             border-bottom: 1px solid #f5f5f5;
-            font-size: 14px;
         }
-        .qr-box {
-            margin-top: 20px;
-            padding: 20px;
-            background: #e8f5e9;
-            border-radius: 12px;
+        .history-item .status {
+            font-weight: 600;
+        }
+        .history-item .status.success {
+            color: #1b5e20;
+        }
+        .history-item .status.pending {
+            color: #e65100;
+        }
+        .history-item .status.expired {
+            color: #b71c1c;
+        }
+
+        /* DEBUG */
+        .debug-log {
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #666;
+            margin-top: 12px;
+            max-height: 80px;
+            overflow-y: auto;
+            font-family: monospace;
             display: none;
         }
-        .qr-box.show { display: block; }
-        #receipt {
-            display: none;
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: left;
-            margin-top: 10px;
+        .debug-log.show {
+            display: block;
         }
-        #receipt.show { display: block; }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .container {
+                padding: 16px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>💳 Deposit QRIS</h1>
-    <p style="color:#666;font-size:14px;">Scan & bayar, saldo langsung masuk</p>
-
-    <input type="number" id="amount" value="1000" min="1000">
-    <div class="fee">💰 Biaya layanan: Rp 76</div>
-
-    <button id="btnBayar" onclick="buatDeposit()">💰 Buat Deposit</button>
-
-    <div class="btn-group">
-        <button onclick="cekStatus()">🔄 Cek Status</button>
-        <button class="batal" onclick="cancelDeposit()">❌ Batal</button>
-    </div>
-
-    <div id="statusBadge" class="pending-text">⏳ Menunggu Pembayaran</div>
-
-    <div class="qr-box" id="qrBox">
-        <h3 style="color:#1b5e20;">✅ Deposit Berhasil!</h3>
-        <p>ID Deposit: <b id="depositId">-</b></p>
-        <p>Total: <b id="totalDisplay">-</b></p>
-        <button class="btn-qr" onclick="bukaQR()">📱 Buka QR Code</button>
-        <p style="font-size:12px;color:#999;margin-top:8px;">
-            Klik tombol di atas untuk buka QR di tab baru
-        </p>
-        <p style="font-size:12px;color:#e65100;font-weight:600;">⏱️ QR berlaku 1 jam</p>
-        <p style="font-size:12px;color:#999;">Setelah scan & bayar, klik "Cek Status"</p>
-        <p id="countdown" style="font-size:14px;color:#e65100;margin-top:8px;">⏱️ Sisa waktu: 59:59</p>
-    </div>
-
-    <div id="receipt"></div>
-
-    <div class="history">
-        <h4>📋 Riwayat</h4>
-        <div id="historyList"><span style="color:#999;">Belum ada deposit</span></div>
-    </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-const API = 'https://bdehqzvzmtpvamcbyfmx.supabase.co/functions/v1/deposit';
-let depositId = null;
-let polling = null;
-let countdownInterval = null;
-let seconds = 3600;
-let qrUrl = '';
-let history = [];
-
-function loadHistory() {
-    try {
-        const saved = localStorage.getItem('deposit_history');
-        if (saved) history = JSON.parse(saved);
-        renderHistory();
-    } catch {}
-}
-
-function saveHistory() {
-    localStorage.setItem('deposit_history', JSON.stringify(history));
-}
-
-function renderHistory() {
-    const el = document.getElementById('historyList');
-    if (history.length === 0) {
-        el.innerHTML = '<span style="color:#999;">Belum ada deposit</span>';
-        return;
-    }
-    el.innerHTML = history.slice(-5).reverse().map(h => `
-        <div class="history-item">
-            <span>#${h.id} - Rp ${h.total.toLocaleString()}</span>
-            <span style="color:${h.status === 'success' ? '#1b5e20' : h.status === 'expired' ? '#b71c1c' : '#e65100'}">
-                ${h.status === 'success' ? '✅ Sukses' : h.status === 'expired' ? '⏰ Expired' : '⏳ Pending'}
-            </span>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>💳 Deposit QRIS</h1>
+            <p>Scan & bayar, saldo langsung masuk!</p>
         </div>
-    `).join('');
-}
 
-function showToast(msg, type = 'info') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = `toast ${type}`;
-    t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 3000);
-}
+        <!-- INPUT NOMINAL -->
+        <div class="form-group">
+            <label>Masukkan Nominal Deposit</label>
+            <input type="number" id="amountInput" value="1000" min="1000" step="1000">
+            <div class="fee-info">💰 Biaya layanan: Rp 76</div>
+        </div>
 
-function bukaQR() {
-    if (qrUrl) {
-        window.open(qrUrl, '_blank');
-        showToast('🔓 QR dibuka di tab baru!', 'info');
-    } else {
-        showToast('⚠️ QR belum siap', 'error');
-    }
-}
+        <!-- TOMBOL -->
+        <button class="btn-primary" id="btnBayar" onclick="buatDeposit()">
+            💰 Buat Deposit
+        </button>
 
-function startCountdown() {
-    seconds = 3600;
-    clearInterval(countdownInterval);
-    countdownInterval = setInterval(() => {
-        seconds--;
-        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const s = String(seconds % 60).padStart(2, '0');
-        document.getElementById('countdown').textContent = `⏱️ Sisa waktu: ${m}:${s}`;
-        if (seconds <= 0) {
-            clearInterval(countdownInterval);
-            document.getElementById('countdown').textContent = '⏰ Waktu habis!';
-            document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
-            document.getElementById('statusBadge').className = 'expired-text';
+        <div class="btn-group">
+            <button class="btn-secondary" onclick="cekStatus()">🔄 Cek Status</button>
+            <button class="btn-secondary btn-danger" onclick="cancelDeposit()">❌ Batal</button>
+        </div>
+
+        <!-- QR SECTION -->
+        <div class="qr-section" id="qrSection">
+            <div id="qrImage"></div>
+            <div id="qrError" class="qr-error" style="display:none;">
+                ⚠️ QR Code tidak bisa dimuat.
+                <a href="#" onclick="refreshQR(); return false;" style="color:#6a3de8;">Refresh QR</a>
+            </div>
+            <div class="qr-info">
+                <div>ID Deposit: <span class="highlight" id="depositId">-</span></div>
+                <div>Total: <span class="highlight" id="totalDisplay">-</span></div>
+                <span class="status-badge pending" id="statusBadge">⏳ Menunggu Pembayaran</span>
+                <div class="countdown" id="countdown">⏱️ Sisa waktu: 59:59</div>
+                <p style="font-size:12px;color:#999;margin-top:8px;">
+                    📱 Scan pakai OVO, Gopay, DANA, atau QRIS lain
+                </p>
+            </div>
+
+            <!-- TOMBOL REFRESH QR -->
+            <button class="btn-secondary btn-refresh" onclick="refreshQR()" style="margin-top:12px;">
+                🔄 Refresh QR Code
+            </button>
+
+            <div id="receiptBox"></div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="history">
+            <h4>📋 Riwayat Deposit</h4>
+            <div id="historyList">
+                <div style="color:#999;font-size:13px;text-align:center;padding:10px 0;">Belum ada deposit</div>
+            </div>
+        </div>
+
+        <!-- DEBUG -->
+        <div class="debug-log" id="debugLog"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============ KONFIGURASI ============
+        const API_URL = 'https://bdehqzvzmtpvamcbyfmx.supabase.co/functions/v1/deposit';
+        let currentDepositId = null;
+        let pollingInterval = null;
+        let countdownInterval = null;
+        let countdownSeconds = 3600;
+        let history = [];
+        let lastQrData = null;
+
+        // ============ DEBUG ============
+        function debug(msg) {
+            const el = document.getElementById('debugLog');
+            el.classList.add('show');
+            el.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+            el.scrollTop = el.scrollHeight;
+            console.log(msg);
         }
-    }, 1000);
-}
 
-function showReceipt(data) {
-    const el = document.getElementById('receipt');
-    el.classList.add('show');
-    el.innerHTML = `
-        <div style="font-weight:bold;color:#1b5e20;text-align:center;">✅ PEMBAYARAN BERHASIL!</div>
-        <div><b>ID Deposit:</b> #${data.deposit_id}</div>
-        <div><b>Nominal:</b> ${data.amount_str || 'Rp ' + data.amount?.toLocaleString()}</div>
-    `;
-}
-
-async function cekStatusInternal() {
-    if (!depositId) return;
-    try {
-        const res = await fetch(`${API}?check=${depositId}`);
-        const data = await res.json();
-        
-        if (data.status === 'success') {
-            document.getElementById('statusBadge').textContent = '✅ Pembayaran Berhasil!';
-            document.getElementById('statusBadge').className = 'success-text';
-            showReceipt(data);
-            clearInterval(polling);
-            clearInterval(countdownInterval);
-            const h = history.find(h => h.id === depositId);
-            if (h) { h.status = 'success'; saveHistory(); renderHistory(); }
-            showToast('🎉 Pembayaran BERHASIL!', 'success');
-            document.getElementById('qrBox').classList.remove('show');
-            setTimeout(() => {
-                depositId = null;
-            }, 5000);
-        } else if (data.status === 'expired') {
-            document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
-            document.getElementById('statusBadge').className = 'expired-text';
-            clearInterval(polling);
-            clearInterval(countdownInterval);
+        // ============ HISTORY ============
+        function loadHistory() {
+            try {
+                const saved = localStorage.getItem('deposit_history');
+                if (saved) history = JSON.parse(saved);
+                renderHistory();
+            } catch {}
         }
-    } catch (e) { console.log(e); }
-}
 
-async function buatDeposit() {
-    const btn = document.getElementById('btnBayar');
-    const amount = parseInt(document.getElementById('amount').value) || 1000;
-    if (amount < 1000) { showToast('Minimal Rp 1.000', 'error'); return; }
-    
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Memproses...';
-    document.getElementById('qrBox').classList.remove('show');
-    document.getElementById('receipt').classList.remove('show');
-    document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
-    document.getElementById('statusBadge').className = 'pending-text';
-    clearInterval(polling);
-    clearInterval(countdownInterval);
-    qrUrl = '';
-    
-    try {
-        const res = await fetch(API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount })
+        function saveHistory() {
+            try {
+                localStorage.setItem('deposit_history', JSON.stringify(history));
+            } catch {}
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            if (history.length === 0) {
+                container.innerHTML =
+                '<div style="color:#999;font-size:13px;text-align:center;padding:10px 0;">Belum ada deposit</div>';
+                return;
+            }
+            container.innerHTML = history.slice(-5).reverse().map(h => `
+                        <div class="history-item">
+                            <span>#${h.id} - Rp ${h.total.toLocaleString('id-ID')}</span>
+                            <span class="status ${h.status}">${h.status === 'success' ? '✅ Sukses' : h.status === 'expired' ? '⏰ Expired' : '⏳ Pending'}</span>
+                        </div>
+                    `).join('');
+        }
+
+        // ============ TOAST ============
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        }
+
+        // ============ COUNTDOWN ============
+        function startCountdown() {
+            countdownSeconds = 3600;
+            clearInterval(countdownInterval);
+            document.getElementById('countdown').className = 'countdown';
+            document.getElementById('countdown').style.color = '#e65100';
+
+            countdownInterval = setInterval(() => {
+                countdownSeconds--;
+                const minutes = Math.floor(countdownSeconds / 60);
+                const seconds = countdownSeconds % 60;
+                const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                const el = document.getElementById('countdown');
+                el.textContent = `⏱️ Sisa waktu: ${display}`;
+
+                if (countdownSeconds <= 300) el.style.color = '#e53935';
+
+                if (countdownSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    el.textContent = '⏰ Waktu habis!';
+                    el.className = 'countdown expired';
+                    document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
+                    document.getElementById('statusBadge').className = 'status-badge expired';
+                }
+            }, 1000);
+        }
+
+        // ============ REFRESH QR ============
+        function refreshQR() {
+            if (lastQrData) {
+                const img = document.getElementById('qrImage').querySelector('img');
+                if (img) {
+                    img.src = lastQrData.qr_image + '?t=' + Date.now();
+                    document.getElementById('qrError').style.display = 'none';
+                    showToast('🔄 QR Code di-refresh!', 'info');
+                    debug('QR refreshed');
+                }
+            } else {
+                showToast('⚠️ Tidak ada QR untuk direfresh', 'error');
+            }
+        }
+
+        // ============ CANCEL DEPOSIT ============
+        async function cancelDeposit() {
+            if (!currentDepositId) {
+                showToast('⚠️ Tidak ada deposit aktif', 'error');
+                return;
+            }
+
+            if (!confirm(`Batalkan deposit #${currentDepositId}?`)) return;
+
+            try {
+                showToast('⏳ Membatalkan...', 'info');
+                debug('Membatalkan deposit #' + currentDepositId);
+                const response = await fetch(`${API_URL}?cancel=${currentDepositId}`, { method: 'POST' });
+                const data = await response.json();
+                debug('Cancel response: ' + JSON.stringify(data));
+
+                if (data.success) {
+                    showToast(`✅ ${data.message}`, 'success');
+                    const h = history.find(h => h.id === currentDepositId);
+                    if (h) { h.status = 'expired';
+                        saveHistory();
+                        renderHistory(); }
+
+                    if (pollingInterval) { clearInterval(pollingInterval);
+                        pollingInterval = null; }
+                    if (countdownInterval) { clearInterval(countdownInterval);
+                        countdownInterval = null; }
+
+                    setTimeout(() => {
+                        document.getElementById('qrSection').classList.remove('show');
+                        currentDepositId = null;
+                    }, 2000);
+                } else {
+                    showToast(`❌ ${data.error || 'Gagal batalkan'}`, 'error');
+                }
+            } catch (error) {
+                showToast(`❌ ${error.message}`, 'error');
+                debug('Cancel error: ' + error.message);
+            }
+        }
+
+        // ============ SHOW RECEIPT ============
+        function showReceipt(data) {
+            const box = document.getElementById('receiptBox');
+            box.innerHTML = `
+                        <div class="receipt-box">
+                            <div style="text-align:center;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ PEMBAYARAN BERHASIL!</div>
+                            <div class="row"><strong>ID Deposit:</strong> <span>#${data.deposit_id}</span></div>
+                            <div class="row"><strong>Nominal:</strong> <span>${data.amount_str || 'Rp ' + data.amount?.toLocaleString('id-ID')}</span></div>
+                            <div class="row"><strong>Saldo Akhir:</strong> <span>${data.balance_str || 'Rp ' + data.balance?.toLocaleString('id-ID')}</span></div>
+                            <div class="row"><strong>Tanggal:</strong> <span>${data.date || new Date().toLocaleString('id-ID')}</span></div>
+                        </div>
+                    `;
+        }
+
+        // ============ CEK STATUS ============
+        async function cekStatusInternal() {
+            if (!currentDepositId) return;
+
+            try {
+                debug('Cek status #' + currentDepositId);
+                const response = await fetch(`${API_URL}?check=${currentDepositId}`);
+                const data = await response.json();
+                const badge = document.getElementById('statusBadge');
+                debug('Status: ' + JSON.stringify(data));
+
+                // ✅ SUKSES!
+                if (data.status === 'success' || data.is_success === true) {
+                    badge.textContent = '✅ Pembayaran Berhasil!';
+                    badge.className = 'status-badge success';
+
+                    showReceipt(data);
+
+                    if (pollingInterval) { clearInterval(pollingInterval);
+                        pollingInterval = null; }
+                    if (countdownInterval) { clearInterval(countdownInterval);
+                        countdownInterval = null; }
+
+                    const h = history.find(h => h.id === currentDepositId);
+                    if (h) { h.status = 'success';
+                        saveHistory();
+                        renderHistory(); }
+
+                    showToast('🎉 Pembayaran BERHASIL! Saldo masuk!', 'success');
+
+                    setTimeout(() => {
+                        document.getElementById('qrSection').classList.remove('show');
+                        currentDepositId = null;
+                    }, 5000);
+                    return;
+                }
+
+                // ⏰ EXPIRED
+                if (data.status === 'expired') {
+                    badge.textContent = '⏰ QR Expired!';
+                    badge.className = 'status-badge expired';
+
+                    const h = history.find(h => h.id === currentDepositId);
+                    if (h) { h.status = 'expired';
+                        saveHistory();
+                        renderHistory(); }
+
+                    if (pollingInterval) { clearInterval(pollingInterval);
+                        pollingInterval = null; }
+                    if (countdownInterval) { clearInterval(countdownInterval);
+                        countdownInterval = null; }
+
+                    setTimeout(() => {
+                        document.getElementById('qrSection').classList.remove('show');
+                        currentDepositId = null;
+                    }, 3000);
+                    return;
+                }
+
+                // ⏳ PENDING
+                if (data.status === 'pending' || data.status === 'WP') {
+                    badge.textContent = '⏳ Menunggu Pembayaran...';
+                    badge.className = 'status-badge pending';
+                }
+
+            } catch (error) {
+                debug('Cek status error: ' + error.message);
+            }
+        }
+
+        async function cekStatus() {
+            if (!currentDepositId) {
+                showToast('⚠️ Belum ada deposit aktif', 'error');
+                return;
+            }
+            showToast('⏳ Mengecek...', 'info');
+            await cekStatusInternal();
+        }
+
+        // ============ BUAT DEPOSIT ============
+        async function buatDeposit() {
+            const btn = document.getElementById('btnBayar');
+            const amountInput = document.getElementById('amountInput');
+            const amount = parseInt(amountInput.value) || 1000;
+
+            if (amount < 1000) {
+                showToast('⚠️ Minimal Rp 1.000', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loader"></span> Memproses...';
+
+            document.getElementById('qrSection').classList.remove('show');
+            document.getElementById('receiptBox').innerHTML = '';
+            document.getElementById('qrError').style.display = 'none';
+
+            if (pollingInterval) { clearInterval(pollingInterval);
+                pollingInterval = null; }
+            if (countdownInterval) { clearInterval(countdownInterval);
+                countdownInterval = null; }
+
+            try {
+                debug('Buat deposit: ' + amount);
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount })
+                });
+
+                const data = await response.json();
+                debug('Deposit response: ' + JSON.stringify(data));
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                if (data.success === false) {
+                    throw new Error(data.error || 'Gagal membuat deposit');
+                }
+
+                if (data.qr_image && data.deposit_id) {
+                    currentDepositId = data.deposit_id;
+                    lastQrData = data;
+
+                    // Simpan history
+                    history.push({
+                        id: data.deposit_id,
+                        total: data.total || amount,
+                        status: 'pending'
+                    });
+                    saveHistory();
+                    renderHistory();
+
+                    // Tampilkan QR
+                    document.getElementById('qrSection').classList.add('show');
+                    document.getElementById('qrImage').innerHTML =
+                        `<img src="${data.qr_image}" alt="QRIS" onerror="document.getElementById('qrError').style.display='block';">`;
+
+                    document.getElementById('depositId').textContent = data.deposit_id;
+                    document.getElementById('totalDisplay').textContent =
+                    `Rp ${(data.total || amount).toLocaleString('id-ID')}`;
+                    document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
+                    document.getElementById('statusBadge').className = 'status-badge pending';
+
+                    startCountdown();
+
+                    pollingInterval = setInterval(cekStatusInternal, 8000);
+
+                    showToast(`✅ Deposit #${data.deposit_id} berhasil dibuat! Scan QR untuk bayar.`, 'success');
+
+                } else {
+                    throw new Error('Response tidak valid');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(`❌ ${error.message}`, 'error');
+                debug('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💰 Buat Deposit';
+            }
+        }
+
+        // ============ INIT ============
+        loadHistory();
+        document.getElementById('amountInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') buatDeposit();
         });
-        const data = await res.json();
-        
-        if (!data.success) throw new Error(data.error || 'Gagal');
-        if (!data.qr_url) throw new Error('QR URL tidak tersedia');
-        
-        depositId = data.deposit_id;
-        qrUrl = data.qr_url;
-        
-        history.push({ id: data.deposit_id, total: data.total, status: 'pending' });
-        saveHistory();
-        renderHistory();
-        
-        document.getElementById('qrBox').classList.add('show');
-        document.getElementById('depositId').textContent = data.deposit_id;
-        document.getElementById('totalDisplay').textContent = `Rp ${data.total.toLocaleString()}`;
-        document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
-        document.getElementById('statusBadge').className = 'pending-text';
-        
-        startCountdown();
-        
-        // OTOMATIS BUKA QR
-        setTimeout(() => {
-            bukaQR();
-        }, 500);
-        
-        polling = setInterval(cekStatusInternal, 8000);
-        showToast(`✅ Deposit #${data.deposit_id} berhasil!`, 'success');
-        
-    } catch (e) {
-        showToast(`❌ ${e.message}`, 'error');
-        console.error(e);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '💰 Buat Deposit';
-    }
-}
 
-async function cekStatus() {
-    if (!depositId) { showToast('Belum ada deposit', 'error'); return; }
-    showToast('⏳ Mengecek...', 'info');
-    await cekStatusInternal();
-}
+        console.log('💳 Deposit QRIS siap!');
+        console.log('📱 Scan QR dengan OVO, Gopay, DANA');
+        console.log('🔗 API URL:', API_URL);
+    </script>
 
-async function cancelDeposit() {
-    if (!depositId) { showToast('Belum ada deposit', 'error'); return; }
-    if (!confirm(`Batalkan deposit #${depositId}?`)) return;
-    showToast('⏳ Membatalkan...', 'info');
-    try {
-        const res = await fetch(`${API}?cancel=${depositId}`, { method: 'POST' });
-        const data = await res.json();
-        if (data.success) {
-            showToast(`✅ ${data.message}`, 'success');
-            const h = history.find(h => h.id === depositId);
-            if (h) { h.status = 'expired'; saveHistory(); renderHistory(); }
-            clearInterval(polling);
-            clearInterval(countdownInterval);
-            document.getElementById('qrBox').classList.remove('show');
-            depositId = null;
-        } else {
-            showToast(`❌ ${data.error || 'Gagal'}`, 'error');
-        }
-    } catch (e) {
-        showToast(`❌ ${e.message}`, 'error');
-    }
-}
-
-loadHistory();
-</script>
 </body>
 </html>
