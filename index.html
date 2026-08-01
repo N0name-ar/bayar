@@ -235,7 +235,7 @@ let pollingInterval = null;
 let countdownInterval = null;
 let countdownSeconds = 3600;
 let history = [];
-let lastQrData = null;
+let lastQrUrl = '';
 
 function debug(msg) {
     const el = document.getElementById('debugLog');
@@ -305,12 +305,12 @@ function startCountdown() {
 }
 
 function refreshQR() {
-    if (lastQrData) {
+    if (lastQrUrl) {
         const img = document.getElementById('qrImage').querySelector('img');
         if (img) {
-            img.src = lastQrData.qr_image + '?t=' + Date.now();
+            img.src = lastQrUrl + '?t=' + Date.now();
             document.getElementById('qrError').style.display = 'none';
-            showToast('🔄 QR Code di-refresh!', 'info');
+            showToast('🔄 QR di-refresh!', 'info');
             debug('QR refreshed');
         }
     } else {
@@ -452,17 +452,13 @@ async function buatDeposit() {
         const data = await response.json();
         debug('Deposit response: ' + JSON.stringify(data));
         
-        if (!response.ok || data.error) {
-            throw new Error(data.error || `HTTP ${response.status}`);
-        }
-        
-        if (data.success === false) {
+        if (!data.success) {
             throw new Error(data.error || 'Gagal membuat deposit');
         }
         
-        if (data.qr_image && data.deposit_id) {
+        if (data.deposit_id) {
             currentDepositId = data.deposit_id;
-            lastQrData = data;
+            lastQrUrl = data.qr_url || '';
             
             // Simpan history
             history.push({
@@ -475,8 +471,14 @@ async function buatDeposit() {
             
             // Tampilkan QR
             document.getElementById('qrSection').classList.add('show');
-            document.getElementById('qrImage').innerHTML = 
-                `<img src="${data.qr_image}" alt="QRIS" onerror="document.getElementById('qrError').style.display='block';">`;
+            
+            if (lastQrUrl) {
+                document.getElementById('qrImage').innerHTML = 
+                    `<img src="${lastQrUrl}" alt="QRIS" onerror="document.getElementById('qrError').style.display='block';">`;
+            } else {
+                document.getElementById('qrError').style.display = 'block';
+                document.getElementById('qrError').innerHTML = '⚠️ QR URL tidak tersedia';
+            }
             
             document.getElementById('depositId').textContent = data.deposit_id;
             document.getElementById('totalDisplay').textContent = `Rp ${(data.total || amount).toLocaleString('id-ID')}`;
