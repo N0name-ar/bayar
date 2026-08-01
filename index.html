@@ -52,20 +52,6 @@
             color: #333;
         }
         .btn-group .batal { background: #ffebee; color: #b71c1c; }
-        #qr {
-            margin-top: 20px;
-            padding: 20px;
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            display: none;
-        }
-        #qr img {
-            max-width: 250px;
-            background: white;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-        }
         .toast {
             position: fixed;
             top: 20px;
@@ -98,6 +84,52 @@
             border-bottom: 1px solid #f5f5f5;
             font-size: 14px;
         }
+        .qr-redirect-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 12px;
+            display: none;
+        }
+        .qr-redirect-box.show { display: block; }
+        .qr-redirect-box .big-qr {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .btn-qr {
+            background: #ff6f00;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-qr:hover { background: #e65100; }
+        .btn-copy {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-copy:hover { background: #e0e0e0; }
+        .qr-url-text {
+            font-size: 11px;
+            color: #666;
+            word-break: break-all;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -116,14 +148,33 @@
         <button class="batal" onclick="cancelDeposit()">❌ Batal</button>
     </div>
 
-    <div id="qr">
-        <div id="qrImage"></div>
-        <p>ID Deposit: <b id="depositId">-</b></p>
-        <p>Total: <b id="totalDisplay">-</b></p>
-        <p id="statusBadge" class="pending-text">⏳ Menunggu Pembayaran</p>
-        <p id="countdown" style="font-size:14px;color:#e65100;">⏱️ Sisa waktu: 59:59</p>
-        <div id="receipt" style="display:none;background:#e8f5e9;padding:15px;border-radius:10px;text-align:left;margin-top:10px;"></div>
+    <!-- QR Redirect Box -->
+    <div class="qr-redirect-box" id="qrBox">
+        <span class="big-qr">📱</span>
+        <h3 style="color:#1b5e20;">QR Code Siap!</h3>
+        <p style="font-size:14px;color:#555;">
+            ID Deposit: <b id="qrDepositId">-</b><br>
+            Total: <b id="qrTotalDisplay">-</b>
+        </p>
+        <button class="btn-qr" onclick="bukaQR()">🔓 Buka QR Code</button>
+        <p style="font-size:12px;color:#999;margin-top:8px;">
+            Klik tombol di atas untuk membuka QR di tab baru
+        </p>
+        <button class="btn-copy" onclick="copyQRUrl()">📋 Salin Link QR</button>
+        <div class="qr-url-text" id="qrUrlText">Loading...</div>
+        <p style="font-size:12px;color:#e65100;margin-top:8px;font-weight:600;">
+            ⏱️ QR berlaku 1 jam
+        </p>
+        <p style="font-size:12px;color:#999;margin-top:4px;">
+            Setelah scan & bayar, kembali ke halaman ini untuk cek status
+        </p>
+        <button class="btn-qr" onclick="cekStatus()" style="background:#6a3de8;margin-top:4px;">
+            🔄 Cek Status Pembayaran
+        </button>
     </div>
+
+    <div id="statusBadge" class="pending-text" style="margin-top:16px;font-weight:bold;">⏳ Menunggu Pembayaran</div>
+    <div id="receipt" style="display:none;background:#e8f5e9;padding:15px;border-radius:10px;text-align:left;margin-top:10px;"></div>
 
     <div class="history">
         <h4>📋 Riwayat</h4>
@@ -137,8 +188,7 @@
 const API = 'https://bdehqzvzmtpvamcbyfmx.supabase.co/functions/v1/deposit';
 let depositId = null;
 let polling = null;
-let countdownInterval = null;
-let seconds = 3600;
+let qrUrl = '';
 let history = [];
 
 function loadHistory() {
@@ -177,21 +227,43 @@ function showToast(msg, type = 'info') {
     setTimeout(() => t.style.display = 'none', 3000);
 }
 
-function startCountdown() {
-    seconds = 3600;
-    clearInterval(countdownInterval);
-    countdownInterval = setInterval(() => {
-        seconds--;
-        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const s = String(seconds % 60).padStart(2, '0');
-        document.getElementById('countdown').textContent = `⏱️ Sisa waktu: ${m}:${s}`;
-        if (seconds <= 0) {
-            clearInterval(countdownInterval);
-            document.getElementById('countdown').textContent = '⏰ Waktu habis!';
-            document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
-            document.getElementById('statusBadge').className = 'expired-text';
-        }
-    }, 1000);
+function bukaQR() {
+    if (qrUrl) {
+        window.open(qrUrl, '_blank');
+        showToast('🔓 QR dibuka di tab baru!', 'info');
+    } else {
+        showToast('⚠️ QR belum siap', 'error');
+    }
+}
+
+function copyQRUrl() {
+    if (qrUrl) {
+        navigator.clipboard.writeText(qrUrl).then(() => {
+            showToast('✅ Link QR disalin!', 'success');
+        }).catch(() => {
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = qrUrl;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('✅ Link QR disalin!', 'success');
+        });
+    } else {
+        showToast('⚠️ QR belum siap', 'error');
+    }
+}
+
+function showReceipt(data) {
+    document.getElementById('receipt').style.display = 'block';
+    document.getElementById('receipt').innerHTML = `
+        <div style="font-weight:bold;color:#1b5e20;text-align:center;">✅ PEMBAYARAN BERHASIL!</div>
+        <div><b>ID Deposit:</b> #${data.deposit_id}</div>
+        <div><b>Nominal:</b> ${data.amount_str || 'Rp ' + data.amount?.toLocaleString()}</div>
+    `;
+    document.getElementById('statusBadge').textContent = '✅ Pembayaran Berhasil!';
+    document.getElementById('statusBadge').className = 'success-text';
 }
 
 async function cekStatusInternal() {
@@ -199,30 +271,22 @@ async function cekStatusInternal() {
     try {
         const res = await fetch(`${API}?check=${depositId}`);
         const data = await res.json();
+        console.log('Status:', data);
         
         if (data.status === 'success') {
-            document.getElementById('statusBadge').textContent = '✅ Pembayaran Berhasil!';
-            document.getElementById('statusBadge').className = 'success-text';
-            document.getElementById('receipt').style.display = 'block';
-            document.getElementById('receipt').innerHTML = `
-                <div style="font-weight:bold;color:#1b5e20;text-align:center;">✅ PEMBAYARAN BERHASIL!</div>
-                <div><b>ID Deposit:</b> #${data.deposit_id}</div>
-                <div><b>Nominal:</b> ${data.amount_str || 'Rp ' + data.amount?.toLocaleString()}</div>
-            `;
+            showReceipt(data);
             clearInterval(polling);
-            clearInterval(countdownInterval);
             const h = history.find(h => h.id === depositId);
             if (h) { h.status = 'success'; saveHistory(); renderHistory(); }
             showToast('🎉 Pembayaran BERHASIL!', 'success');
+            document.getElementById('qrBox').classList.remove('show');
             setTimeout(() => {
-                document.getElementById('qr').style.display = 'none';
                 depositId = null;
             }, 5000);
         } else if (data.status === 'expired') {
             document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
             document.getElementById('statusBadge').className = 'expired-text';
             clearInterval(polling);
-            clearInterval(countdownInterval);
         }
     } catch (e) { console.log(e); }
 }
@@ -234,10 +298,12 @@ async function buatDeposit() {
     
     btn.disabled = true;
     btn.innerHTML = '⏳ Memproses...';
-    document.getElementById('qr').style.display = 'none';
+    document.getElementById('qrBox').classList.remove('show');
     document.getElementById('receipt').style.display = 'none';
+    document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
+    document.getElementById('statusBadge').className = 'pending-text';
     clearInterval(polling);
-    clearInterval(countdownInterval);
+    qrUrl = '';
     
     try {
         const res = await fetch(API, {
@@ -246,26 +312,34 @@ async function buatDeposit() {
             body: JSON.stringify({ amount })
         });
         const data = await res.json();
+        console.log('Response:', data);
         
         if (!data.success) throw new Error(data.error || 'Gagal');
-        if (!data.qr_image) throw new Error('QR tidak tersedia');
+        if (!data.qr_url) throw new Error('QR URL tidak tersedia');
         
         depositId = data.deposit_id;
+        qrUrl = data.qr_url;
         
         history.push({ id: data.deposit_id, total: data.total, status: 'pending' });
         saveHistory();
         renderHistory();
         
-        document.getElementById('qr').style.display = 'block';
-        document.getElementById('qrImage').innerHTML = `<img src="${data.qr_image}" alt="QRIS">`;
-        document.getElementById('depositId').textContent = data.deposit_id;
-        document.getElementById('totalDisplay').textContent = `Rp ${data.total.toLocaleString()}`;
+        // Tampilkan box QR
+        document.getElementById('qrBox').classList.add('show');
+        document.getElementById('qrDepositId').textContent = data.deposit_id;
+        document.getElementById('qrTotalDisplay').textContent = `Rp ${data.total.toLocaleString()}`;
+        document.getElementById('qrUrlText').textContent = qrUrl;
+        
         document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
         document.getElementById('statusBadge').className = 'pending-text';
         
-        startCountdown();
+        // Auto buka QR di tab baru
+        setTimeout(() => {
+            bukaQR();
+        }, 500);
+        
         polling = setInterval(cekStatusInternal, 8000);
-        showToast(`✅ Deposit #${data.deposit_id} berhasil!`, 'success');
+        showToast(`✅ Deposit #${data.deposit_id} berhasil! QR dibuka.`, 'success');
         
     } catch (e) {
         showToast(`❌ ${e.message}`, 'error');
@@ -294,8 +368,7 @@ async function cancelDeposit() {
             const h = history.find(h => h.id === depositId);
             if (h) { h.status = 'expired'; saveHistory(); renderHistory(); }
             clearInterval(polling);
-            clearInterval(countdownInterval);
-            document.getElementById('qr').style.display = 'none';
+            document.getElementById('qrBox').classList.remove('show');
             depositId = null;
         } else {
             showToast(`❌ ${data.error || 'Gagal'}`, 'error');
