@@ -52,6 +52,19 @@
             color: #333;
         }
         .btn-group .batal { background: #ffebee; color: #b71c1c; }
+        .btn-qr {
+            background: #ff6f00;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-qr:hover { background: #e65100; }
         .toast {
             position: fixed;
             top: 20px;
@@ -84,21 +97,14 @@
             border-bottom: 1px solid #f5f5f5;
             font-size: 14px;
         }
-        #qr {
+        .qr-box {
             margin-top: 20px;
             padding: 20px;
-            border: 2px dashed #ddd;
-            border-radius: 10px;
+            background: #e8f5e9;
+            border-radius: 12px;
             display: none;
         }
-        #qr.show { display: block; }
-        #qr img {
-            max-width: 250px;
-            background: white;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-        }
+        .qr-box.show { display: block; }
         #receipt {
             display: none;
             background: #e8f5e9;
@@ -108,20 +114,6 @@
             margin-top: 10px;
         }
         #receipt.show { display: block; }
-        #debug {
-            background: #f5f5f5;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            color: #666;
-            margin-top: 12px;
-            text-align: left;
-            max-height: 100px;
-            overflow-y: auto;
-            display: none;
-            font-family: monospace;
-        }
-        #debug.show { display: block; }
     </style>
 </head>
 <body>
@@ -142,11 +134,17 @@
 
     <div id="statusBadge" class="pending-text">⏳ Menunggu Pembayaran</div>
 
-    <div id="qr">
-        <div id="qrImage"></div>
+    <div class="qr-box" id="qrBox">
+        <h3 style="color:#1b5e20;">✅ Deposit Berhasil!</h3>
         <p>ID Deposit: <b id="depositId">-</b></p>
         <p>Total: <b id="totalDisplay">-</b></p>
-        <p id="countdown" style="font-size:14px;color:#e65100;">⏱️ Sisa waktu: 59:59</p>
+        <button class="btn-qr" onclick="bukaQR()">📱 Buka QR Code</button>
+        <p style="font-size:12px;color:#999;margin-top:8px;">
+            Klik tombol di atas untuk buka QR di tab baru
+        </p>
+        <p style="font-size:12px;color:#e65100;font-weight:600;">⏱️ QR berlaku 1 jam</p>
+        <p style="font-size:12px;color:#999;">Setelah scan & bayar, klik "Cek Status"</p>
+        <p id="countdown" style="font-size:14px;color:#e65100;margin-top:8px;">⏱️ Sisa waktu: 59:59</p>
     </div>
 
     <div id="receipt"></div>
@@ -155,8 +153,6 @@
         <h4>📋 Riwayat</h4>
         <div id="historyList"><span style="color:#999;">Belum ada deposit</span></div>
     </div>
-
-    <div id="debug"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -167,15 +163,8 @@ let depositId = null;
 let polling = null;
 let countdownInterval = null;
 let seconds = 3600;
+let qrUrl = '';
 let history = [];
-
-function debug(msg) {
-    const el = document.getElementById('debug');
-    el.classList.add('show');
-    el.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
-    el.scrollTop = el.scrollHeight;
-    console.log(msg);
-}
 
 function loadHistory() {
     try {
@@ -213,6 +202,15 @@ function showToast(msg, type = 'info') {
     setTimeout(() => t.style.display = 'none', 3000);
 }
 
+function bukaQR() {
+    if (qrUrl) {
+        window.open(qrUrl, '_blank');
+        showToast('🔓 QR dibuka di tab baru!', 'info');
+    } else {
+        showToast('⚠️ QR belum siap', 'error');
+    }
+}
+
 function startCountdown() {
     seconds = 3600;
     clearInterval(countdownInterval);
@@ -243,10 +241,8 @@ function showReceipt(data) {
 async function cekStatusInternal() {
     if (!depositId) return;
     try {
-        debug('Cek status #' + depositId);
         const res = await fetch(`${API}?check=${depositId}`);
         const data = await res.json();
-        debug('Status: ' + JSON.stringify(data));
         
         if (data.status === 'success') {
             document.getElementById('statusBadge').textContent = '✅ Pembayaran Berhasil!';
@@ -257,8 +253,8 @@ async function cekStatusInternal() {
             const h = history.find(h => h.id === depositId);
             if (h) { h.status = 'success'; saveHistory(); renderHistory(); }
             showToast('🎉 Pembayaran BERHASIL!', 'success');
+            document.getElementById('qrBox').classList.remove('show');
             setTimeout(() => {
-                document.getElementById('qr').classList.remove('show');
                 depositId = null;
             }, 5000);
         } else if (data.status === 'expired') {
@@ -267,9 +263,7 @@ async function cekStatusInternal() {
             clearInterval(polling);
             clearInterval(countdownInterval);
         }
-    } catch (e) { 
-        debug('Error cek status: ' + e.message);
-    }
+    } catch (e) { console.log(e); }
 }
 
 async function buatDeposit() {
@@ -279,45 +273,49 @@ async function buatDeposit() {
     
     btn.disabled = true;
     btn.innerHTML = '⏳ Memproses...';
-    document.getElementById('qr').classList.remove('show');
+    document.getElementById('qrBox').classList.remove('show');
     document.getElementById('receipt').classList.remove('show');
-    document.getElementById('debug').innerHTML = '';
-    document.getElementById('debug').classList.remove('show');
+    document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
+    document.getElementById('statusBadge').className = 'pending-text';
     clearInterval(polling);
     clearInterval(countdownInterval);
+    qrUrl = '';
     
     try {
-        debug('Buat deposit: ' + amount);
         const res = await fetch(API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount })
         });
         const data = await res.json();
-        debug('Response: ' + JSON.stringify(data));
         
         if (!data.success) throw new Error(data.error || 'Gagal');
-        if (!data.qr_image) throw new Error('QR tidak tersedia');
+        if (!data.qr_url) throw new Error('QR URL tidak tersedia');
         
         depositId = data.deposit_id;
+        qrUrl = data.qr_url;
         
         history.push({ id: data.deposit_id, total: data.total, status: 'pending' });
         saveHistory();
         renderHistory();
         
-        document.getElementById('qr').classList.add('show');
-        document.getElementById('qrImage').innerHTML = `<img src="${data.qr_image}" alt="QRIS">`;
+        document.getElementById('qrBox').classList.add('show');
         document.getElementById('depositId').textContent = data.deposit_id;
         document.getElementById('totalDisplay').textContent = `Rp ${data.total.toLocaleString()}`;
         document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
         document.getElementById('statusBadge').className = 'pending-text';
         
         startCountdown();
+        
+        // OTOMATIS BUKA QR
+        setTimeout(() => {
+            bukaQR();
+        }, 500);
+        
         polling = setInterval(cekStatusInternal, 8000);
         showToast(`✅ Deposit #${data.deposit_id} berhasil!`, 'success');
         
     } catch (e) {
-        debug('❌ ERROR: ' + e.message);
         showToast(`❌ ${e.message}`, 'error');
         console.error(e);
     } finally {
@@ -345,7 +343,7 @@ async function cancelDeposit() {
             if (h) { h.status = 'expired'; saveHistory(); renderHistory(); }
             clearInterval(polling);
             clearInterval(countdownInterval);
-            document.getElementById('qr').classList.remove('show');
+            document.getElementById('qrBox').classList.remove('show');
             depositId = null;
         } else {
             showToast(`❌ ${data.error || 'Gagal'}`, 'error');
