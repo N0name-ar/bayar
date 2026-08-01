@@ -5,12 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deposit QRIS</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
             max-width: 400px;
             margin: 50px auto;
             padding: 20px;
             text-align: center;
+            background: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         input {
             width: 100%;
@@ -21,6 +29,7 @@
             border-radius: 10px;
             margin: 10px 0;
         }
+        input:focus { border-color: #6a3de8; outline: none; }
         button {
             width: 100%;
             padding: 15px;
@@ -32,28 +41,6 @@
             cursor: pointer;
         }
         button:disabled { background: #ccc; }
-        #qr {
-            margin-top: 20px;
-            padding: 20px;
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            display: none;
-        }
-        #qr img {
-            max-width: 100%;
-        }
-        #status {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        #receipt {
-            margin-top: 10px;
-            padding: 15px;
-            background: #e8f5e9;
-            border-radius: 10px;
-            display: none;
-            text-align: left;
-        }
         .btn-group {
             display: flex;
             gap: 10px;
@@ -64,9 +51,20 @@
             background: #f0f0f0;
             color: #333;
         }
-        .btn-group .batal {
-            background: #ffebee;
-            color: #b71c1c;
+        .btn-group .batal { background: #ffebee; color: #b71c1c; }
+        #qr {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            display: none;
+        }
+        #qr img {
+            max-width: 250px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
         }
         .toast {
             position: fixed;
@@ -82,42 +80,55 @@
         .toast.success { background: #43a047; }
         .toast.error { background: #e53935; }
         .toast.info { background: #6a3de8; }
-        .fee {
-            font-size: 12px;
-            color: #999;
-            margin-bottom: 10px;
+        .fee { font-size: 12px; color: #999; margin-bottom: 10px; }
+        .pending-text { color: #e65100; }
+        .success-text { color: #1b5e20; }
+        .expired-text { color: #b71c1c; }
+        #statusBadge { font-weight: bold; }
+        .history {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 16px;
+            text-align: left;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-<h1>💳 Deposit QRIS</h1>
-<p>Scan & bayar, saldo langsung masuk</p>
+<div class="container">
+    <h1>💳 Deposit QRIS</h1>
+    <p style="color:#666;font-size:14px;">Scan & bayar, saldo langsung masuk</p>
 
-<input type="number" id="amount" value="1000" min="1000">
-<div class="fee">💰 Biaya layanan: Rp 76</div>
+    <input type="number" id="amount" value="1000" min="1000">
+    <div class="fee">💰 Biaya layanan: Rp 76</div>
 
-<button id="btnBayar" onclick="buatDeposit()">💰 Buat Deposit</button>
+    <button id="btnBayar" onclick="buatDeposit()">💰 Buat Deposit</button>
 
-<div class="btn-group">
-    <button onclick="cekStatus()">🔄 Cek Status</button>
-    <button class="batal" onclick="cancelDeposit()">❌ Batal</button>
-</div>
+    <div class="btn-group">
+        <button onclick="cekStatus()">🔄 Cek Status</button>
+        <button class="batal" onclick="cancelDeposit()">❌ Batal</button>
+    </div>
 
-<div id="qr">
-    <div id="qrImage"></div>
-    <div id="info">
+    <div id="qr">
+        <div id="qrImage"></div>
         <p>ID Deposit: <b id="depositId">-</b></p>
         <p>Total: <b id="totalDisplay">-</b></p>
-        <p id="statusBadge" style="color:#e65100;">⏳ Menunggu Pembayaran</p>
+        <p id="statusBadge" class="pending-text">⏳ Menunggu Pembayaran</p>
         <p id="countdown" style="font-size:14px;color:#e65100;">⏱️ Sisa waktu: 59:59</p>
+        <div id="receipt" style="display:none;background:#e8f5e9;padding:15px;border-radius:10px;text-align:left;margin-top:10px;"></div>
     </div>
-    <div id="receipt"></div>
-</div>
 
-<div id="history" style="margin-top:20px;border-top:1px solid #eee;padding-top:16px;">
-    <h4>📋 Riwayat</h4>
-    <div id="historyList"><span style="color:#999;">Belum ada deposit</span></div>
+    <div class="history">
+        <h4>📋 Riwayat</h4>
+        <div id="historyList"><span style="color:#999;">Belum ada deposit</span></div>
+    </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -149,7 +160,7 @@ function renderHistory() {
         return;
     }
     el.innerHTML = history.slice(-5).reverse().map(h => `
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5;">
+        <div class="history-item">
             <span>#${h.id} - Rp ${h.total.toLocaleString()}</span>
             <span style="color:${h.status === 'success' ? '#1b5e20' : h.status === 'expired' ? '#b71c1c' : '#e65100'}">
                 ${h.status === 'success' ? '✅ Sukses' : h.status === 'expired' ? '⏰ Expired' : '⏳ Pending'}
@@ -178,18 +189,9 @@ function startCountdown() {
             clearInterval(countdownInterval);
             document.getElementById('countdown').textContent = '⏰ Waktu habis!';
             document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
-            document.getElementById('statusBadge').style.color = '#b71c1c';
+            document.getElementById('statusBadge').className = 'expired-text';
         }
     }, 1000);
-}
-
-function showReceipt(data) {
-    document.getElementById('receipt').style.display = 'block';
-    document.getElementById('receipt').innerHTML = `
-        <div style="font-weight:bold;color:#1b5e20;text-align:center;">✅ PEMBAYARAN BERHASIL!</div>
-        <div style="display:flex;justify-content:space-between;padding:2px 0;"><b>ID Deposit:</b> #${data.deposit_id}</div>
-        <div style="display:flex;justify-content:space-between;padding:2px 0;"><b>Nominal:</b> ${data.amount_str || 'Rp ' + data.amount?.toLocaleString()}</div>
-    `;
 }
 
 async function cekStatusInternal() {
@@ -197,12 +199,16 @@ async function cekStatusInternal() {
     try {
         const res = await fetch(`${API}?check=${depositId}`);
         const data = await res.json();
-        console.log('Status:', data);
         
         if (data.status === 'success') {
             document.getElementById('statusBadge').textContent = '✅ Pembayaran Berhasil!';
-            document.getElementById('statusBadge').style.color = '#1b5e20';
-            showReceipt(data);
+            document.getElementById('statusBadge').className = 'success-text';
+            document.getElementById('receipt').style.display = 'block';
+            document.getElementById('receipt').innerHTML = `
+                <div style="font-weight:bold;color:#1b5e20;text-align:center;">✅ PEMBAYARAN BERHASIL!</div>
+                <div><b>ID Deposit:</b> #${data.deposit_id}</div>
+                <div><b>Nominal:</b> ${data.amount_str || 'Rp ' + data.amount?.toLocaleString()}</div>
+            `;
             clearInterval(polling);
             clearInterval(countdownInterval);
             const h = history.find(h => h.id === depositId);
@@ -214,7 +220,7 @@ async function cekStatusInternal() {
             }, 5000);
         } else if (data.status === 'expired') {
             document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
-            document.getElementById('statusBadge').style.color = '#b71c1c';
+            document.getElementById('statusBadge').className = 'expired-text';
             clearInterval(polling);
             clearInterval(countdownInterval);
         }
@@ -240,9 +246,9 @@ async function buatDeposit() {
             body: JSON.stringify({ amount })
         });
         const data = await res.json();
-        console.log('Response:', data);
         
         if (!data.success) throw new Error(data.error || 'Gagal');
+        if (!data.qr_image) throw new Error('QR tidak tersedia');
         
         depositId = data.deposit_id;
         
@@ -251,11 +257,11 @@ async function buatDeposit() {
         renderHistory();
         
         document.getElementById('qr').style.display = 'block';
-        document.getElementById('qrImage').innerHTML = `<img src="${data.qr_image}" alt="QRIS" onerror="this.innerHTML='QR Error'">`;
+        document.getElementById('qrImage').innerHTML = `<img src="${data.qr_image}" alt="QRIS">`;
         document.getElementById('depositId').textContent = data.deposit_id;
         document.getElementById('totalDisplay').textContent = `Rp ${data.total.toLocaleString()}`;
         document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
-        document.getElementById('statusBadge').style.color = '#e65100';
+        document.getElementById('statusBadge').className = 'pending-text';
         
         startCountdown();
         polling = setInterval(cekStatusInternal, 8000);
@@ -263,6 +269,7 @@ async function buatDeposit() {
         
     } catch (e) {
         showToast(`❌ ${e.message}`, 'error');
+        console.error(e);
     } finally {
         btn.disabled = false;
         btn.innerHTML = '💰 Buat Deposit';
