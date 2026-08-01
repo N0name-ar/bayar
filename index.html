@@ -436,4 +436,79 @@ async function buatDeposit() {
     
     document.getElementById('qrSection').classList.remove('show');
     document.getElementById('receiptBox').innerHTML = '';
-    document.getElementById('qrError').style
+    document.getElementById('qrError').style.display = 'none';
+    
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+    
+    try {
+        debug('Buat deposit: ' + amount);
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount })
+        });
+        
+        const data = await response.json();
+        debug('Deposit response: ' + JSON.stringify(data));
+        
+        if (!response.ok || data.error) {
+            throw new Error(data.error || `HTTP ${response.status}`);
+        }
+        
+        if (data.success === false) {
+            throw new Error(data.error || 'Gagal membuat deposit');
+        }
+        
+        if (data.qr_image && data.deposit_id) {
+            currentDepositId = data.deposit_id;
+            lastQrData = data;
+            
+            // Simpan history
+            history.push({
+                id: data.deposit_id,
+                total: data.total || amount,
+                status: 'pending'
+            });
+            saveHistory();
+            renderHistory();
+            
+            // Tampilkan QR
+            document.getElementById('qrSection').classList.add('show');
+            document.getElementById('qrImage').innerHTML = 
+                `<img src="${data.qr_image}" alt="QRIS" onerror="document.getElementById('qrError').style.display='block';">`;
+            
+            document.getElementById('depositId').textContent = data.deposit_id;
+            document.getElementById('totalDisplay').textContent = `Rp ${(data.total || amount).toLocaleString('id-ID')}`;
+            document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
+            document.getElementById('statusBadge').className = 'status-badge pending';
+            
+            startCountdown();
+            pollingInterval = setInterval(cekStatusInternal, 8000);
+            
+            showToast(`✅ Deposit #${data.deposit_id} berhasil dibuat!`, 'success');
+        } else {
+            throw new Error('Response tidak valid');
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(`❌ ${error.message}`, 'error');
+        debug('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '💰 Buat Deposit';
+    }
+}
+
+// ============ INIT ============
+loadHistory();
+document.getElementById('amountInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') buatDeposit();
+});
+
+console.log('💳 Deposit QRIS siap!');
+console.log('📱 Scan QR dengan OVO, Gopay, DANA');
+</script>
+</body>
+</html>
