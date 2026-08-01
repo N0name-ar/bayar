@@ -3,745 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deposit QRIS</title>
+    <title>Web Testing - Bisapay Deposit</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f0f2f5;
-            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 20px;
         }
         .container {
-            max-width: 450px;
-            width: 100%;
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        .header h1 {
-            font-size: 24px;
-            color: #333;
-        }
-        .header p {
-            color: #666;
-            font-size: 14px;
-            margin-top: 4px;
-        }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 6px;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
+            background: #fff;
+            padding: 25px;
             border-radius: 10px;
-            font-size: 18px;
-            text-align: center;
-            transition: border 0.3s;
-        }
-        .form-group input:focus {
-            border-color: #6a3de8;
-            outline: none;
-        }
-        .fee-info {
-            font-size: 12px;
-            color: #999;
-            text-align: center;
-            margin-top: 4px;
-        }
-        .btn-primary {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             width: 100%;
-            padding: 14px;
-            background: #6a3de8;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            max-width: 400px;
         }
-        .btn-primary:hover:not(:disabled) {
-            background: #5a2fd4;
-            transform: translateY(-2px);
-        }
-        .btn-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .btn-group button {
-            flex: 1;
+        h2 {
+            text-align: center;
+            color: #2c3e50;
             margin-top: 0;
         }
-        .btn-secondary {
-            width: 100%;
-            padding: 10px;
-            background: #f0f0f0;
-            color: #333;
-            border: none;
-            border-radius: 10px;
+        label {
+            font-weight: bold;
             font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-        .btn-danger {
-            background: #ffebee;
-            color: #b71c1c;
-            border: 1px solid #ef9a9a;
-        }
-        .btn-danger:hover {
-            background: #ffcdd2;
-        }
-        .btn-refresh {
-            background: #e3f2fd;
-            color: #0d47a1;
-            border: 1px solid #90caf9;
-        }
-        .btn-refresh:hover {
-            background: #bbdefb;
-        }
-
-        /* QR SECTION */
-        .qr-section {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-            padding: 20px;
-            border: 2px dashed #e0e0e0;
-            border-radius: 12px;
-            animation: fadeIn 0.5s ease;
-        }
-        .qr-section.show {
             display: block;
+            margin-bottom: 5px;
         }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .qr-section img {
-            max-width: 240px;
+        input[type="number"] {
             width: 100%;
-            border-radius: 10px;
-            border: 2px solid #eee;
-            background: white;
-        }
-        .qr-error {
-            background: #fff3e0;
             padding: 10px;
-            border-radius: 8px;
-            color: #e65100;
-            font-size: 13px;
-            margin-top: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
         }
-        .qr-info {
-            margin-top: 12px;
-            font-size: 14px;
-            color: #555;
-        }
-        .qr-info .highlight {
-            color: #6a3de8;
-            font-weight: 600;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-        .status-badge.pending {
-            background: #fff3e0;
-            color: #e65100;
-            animation: pulse 2s infinite;
-        }
-        .status-badge.success {
-            background: #e8f5e9;
-            color: #1b5e20;
-            animation: none;
-        }
-        .status-badge.expired {
-            background: #ffebee;
-            color: #b71c1c;
-            animation: none;
-        }
-        .status-badge.processing {
-            background: #e3f2fd;
-            color: #0d47a1;
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.6;
-            }
-        }
-        .countdown {
-            font-size: 13px;
-            color: #e65100;
-            margin-top: 8px;
-            font-weight: 600;
-        }
-        .countdown.expired {
-            color: #b71c1c;
-        }
-        .receipt-box {
-            background: #e8f5e9;
-            padding: 14px;
-            border-radius: 10px;
-            margin-top: 12px;
-            text-align: left;
-        }
-        .receipt-box .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            font-size: 14px;
-        }
-        .receipt-box .row strong {
-            color: #1b5e20;
-        }
-
-        /* TOAST */
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 14px 24px;
-            border-radius: 12px;
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
             color: white;
-            font-weight: 500;
-            z-index: 999;
-            display: none;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            max-width: 90%;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #219150;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        #loading {
             text-align: center;
-        }
-        .toast.success {
-            background: #43a047;
-        }
-        .toast.error {
-            background: #e53935;
-        }
-        .toast.info {
-            background: #6a3de8;
-        }
-        .toast.warning {
-            background: #f57c00;
-        }
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            animation: spin 1s linear infinite;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* HISTORY */
-        .history {
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid #eee;
-        }
-        .history h4 {
+            margin-top: 15px;
             font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 13px;
-            border-bottom: 1px solid #f5f5f5;
-        }
-        .history-item .status {
-            font-weight: 600;
-        }
-        .history-item .status.success {
-            color: #1b5e20;
-        }
-        .history-item .status.pending {
-            color: #e65100;
-        }
-        .history-item .status.expired {
-            color: #b71c1c;
-        }
-
-        /* DEBUG */
-        .debug-log {
-            background: #f5f5f5;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            color: #666;
-            margin-top: 12px;
-            max-height: 80px;
-            overflow-y: auto;
-            font-family: monospace;
+            color: #e67e22;
             display: none;
         }
-        .debug-log.show {
+        #result {
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+            border-top: 2px dashed #eee;
+            padding-top: 20px;
+        }
+        .qr-box {
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        #qr-image {
+            max-width: 100%;
+            height: auto;
             display: block;
         }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 12px;
-            }
-            .container {
-                padding: 16px;
-            }
+        .detail-text {
+            font-size: 15px;
+            margin: 5px 0;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fadbd8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            text-align: left;
+            overflow-x: auto;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- HEADER -->
-        <div class="header">
-            <h1>💳 Deposit QRIS</h1>
-            <p>Scan & bayar, saldo langsung masuk!</p>
+<div class="container">
+    <h2>Tester Supabase Edge</h2>
+    
+    <label for="amount">Nominal Deposit (Rp):</label>
+    <input type="number" id="amount" value="5000" min="1000" step="1000">
+    
+    <button id="btnSubmit" onclick="testDeposit()">Generate QR Code</button>
+    
+    <div id="loading">⏳ Memproses ke Supabase... Mohon tunggu.</div>
+    <div id="errorBox" class="error"></div>
+
+    <div id="result">
+        <h3 style="color: #27ae60; margin-top:0;">Berhasil!</h3>
+        <p class="detail-text"><strong>ID:</strong> <span id="depoId"></span></p>
+        <p class="detail-text"><strong>Total Bayar:</strong> Rp <span id="depoTotal"></span></p>
+        
+        <div class="qr-box">
+            <img id="qr-image" src="" alt="QR Code akan tampil di sini">
         </div>
 
-        <!-- INPUT NOMINAL -->
-        <div class="form-group">
-            <label>Masukkan Nominal Deposit</label>
-            <input type="number" id="amountInput" value="1000" min="1000" step="1000">
-            <div class="fee-info">💰 Biaya layanan: Rp 76</div>
+        <div style="text-align: left; margin-top: 10px;">
+            <label>Raw JSON Response (Buat Debug):</label>
+            <pre id="rawResponse"></pre>
         </div>
-
-        <!-- TOMBOL -->
-        <button class="btn-primary" id="btnBayar" onclick="buatDeposit()">
-            💰 Buat Deposit
-        </button>
-
-        <div class="btn-group">
-            <button class="btn-secondary" onclick="cekStatus()">🔄 Cek Status</button>
-            <button class="btn-secondary btn-danger" onclick="cancelDeposit()">❌ Batal</button>
-        </div>
-
-        <!-- QR SECTION -->
-        <div class="qr-section" id="qrSection">
-            <div id="qrImage"></div>
-            <div id="qrError" class="qr-error" style="display:none;">
-                ⚠️ QR Code tidak bisa dimuat.
-                <a href="#" onclick="refreshQR(); return false;" style="color:#6a3de8;">Refresh QR</a>
-            </div>
-            <div class="qr-info">
-                <div>ID Deposit: <span class="highlight" id="depositId">-</span></div>
-                <div>Total: <span class="highlight" id="totalDisplay">-</span></div>
-                <span class="status-badge pending" id="statusBadge">⏳ Menunggu Pembayaran</span>
-                <div class="countdown" id="countdown">⏱️ Sisa waktu: 59:59</div>
-                <p style="font-size:12px;color:#999;margin-top:8px;">
-                    📱 Scan pakai OVO, Gopay, DANA, atau QRIS lain
-                </p>
-            </div>
-
-            <!-- TOMBOL REFRESH QR -->
-            <button class="btn-secondary btn-refresh" onclick="refreshQR()" style="margin-top:12px;">
-                🔄 Refresh QR Code
-            </button>
-
-            <div id="receiptBox"></div>
-        </div>
-
-        <!-- HISTORY -->
-        <div class="history">
-            <h4>📋 Riwayat Deposit</h4>
-            <div id="historyList">
-                <div style="color:#999;font-size:13px;text-align:center;padding:10px 0;">Belum ada deposit</div>
-            </div>
-        </div>
-
-        <!-- DEBUG -->
-        <div class="debug-log" id="debugLog"></div>
     </div>
+</div>
 
-    <!-- TOAST -->
-    <div class="toast" id="toast"></div>
+<script>
+    const EDGE_FUNCTION_URL = "https://bdehqzvzmtpvamcbyfmx.supabase.co/functions/v1/bayar";
 
-    <script>
-        // ============ KONFIGURASI ============
-        const API_URL = 'https://bdehqzvzmtpvamcbyfmx.supabase.co/functions/v1/deposit';
-        let currentDepositId = null;
-        let pollingInterval = null;
-        let countdownInterval = null;
-        let countdownSeconds = 3600;
-        let history = [];
-        let lastQrData = null;
+    async function testDeposit() {
+        const btn = document.getElementById('btnSubmit');
+        const loading = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const errorBox = document.getElementById('errorBox');
+        const amountInput = document.getElementById('amount').value;
 
-        // ============ DEBUG ============
-        function debug(msg) {
-            const el = document.getElementById('debugLog');
-            el.classList.add('show');
-            el.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
-            el.scrollTop = el.scrollHeight;
-            console.log(msg);
-        }
+        // Reset UI State
+        btn.disabled = true;
+        loading.style.display = 'block';
+        resultDiv.style.display = 'none';
+        errorBox.style.display = 'none';
 
-        // ============ HISTORY ============
-        function loadHistory() {
+        try {
+            const response = await fetch(EDGE_FUNCTION_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount: parseInt(amountInput) })
+            });
+
+            // Baca text response dulu untuk jaga-jaga kalau error bukan JSON
+            const textData = await response.text();
+            let data;
+            
             try {
-                const saved = localStorage.getItem('deposit_history');
-                if (saved) history = JSON.parse(saved);
-                renderHistory();
-            } catch {}
-        }
-
-        function saveHistory() {
-            try {
-                localStorage.setItem('deposit_history', JSON.stringify(history));
-            } catch {}
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('historyList');
-            if (history.length === 0) {
-                container.innerHTML =
-                '<div style="color:#999;font-size:13px;text-align:center;padding:10px 0;">Belum ada deposit</div>';
-                return;
+                data = JSON.parse(textData);
+            } catch (e) {
+                throw new Error("Respons bukan JSON: " + textData.substring(0, 100));
             }
-            container.innerHTML = history.slice(-5).reverse().map(h => `
-                        <div class="history-item">
-                            <span>#${h.id} - Rp ${h.total.toLocaleString('id-ID')}</span>
-                            <span class="status ${h.status}">${h.status === 'success' ? '✅ Sukses' : h.status === 'expired' ? '⏰ Expired' : '⏳ Pending'}</span>
-                        </div>
-                    `).join('');
-        }
 
-        // ============ TOAST ============
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 4000);
-        }
-
-        // ============ COUNTDOWN ============
-        function startCountdown() {
-            countdownSeconds = 3600;
-            clearInterval(countdownInterval);
-            document.getElementById('countdown').className = 'countdown';
-            document.getElementById('countdown').style.color = '#e65100';
-
-            countdownInterval = setInterval(() => {
-                countdownSeconds--;
-                const minutes = Math.floor(countdownSeconds / 60);
-                const seconds = countdownSeconds % 60;
-                const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-                const el = document.getElementById('countdown');
-                el.textContent = `⏱️ Sisa waktu: ${display}`;
-
-                if (countdownSeconds <= 300) el.style.color = '#e53935';
-
-                if (countdownSeconds <= 0) {
-                    clearInterval(countdownInterval);
-                    el.textContent = '⏰ Waktu habis!';
-                    el.className = 'countdown expired';
-                    document.getElementById('statusBadge').textContent = '⏰ QR Expired!';
-                    document.getElementById('statusBadge').className = 'status-badge expired';
-                }
-            }, 1000);
-        }
-
-        // ============ REFRESH QR ============
-        function refreshQR() {
-            if (lastQrData) {
-                const img = document.getElementById('qrImage').querySelector('img');
-                if (img) {
-                    img.src = lastQrData.qr_image + '?t=' + Date.now();
-                    document.getElementById('qrError').style.display = 'none';
-                    showToast('🔄 QR Code di-refresh!', 'info');
-                    debug('QR refreshed');
-                }
+            if (data.success) {
+                document.getElementById('depoId').innerText = data.deposit_id;
+                document.getElementById('depoTotal').innerText = data.total;
+                
+                // Set sumber gambar QR Code
+                const qrImg = document.getElementById('qr-image');
+                qrImg.src = data.qr_image;
+                
+                // Tampilkan raw JSON buat debug
+                document.getElementById('rawResponse').innerText = JSON.stringify(data, null, 2);
+                
+                resultDiv.style.display = 'block';
             } else {
-                showToast('⚠️ Tidak ada QR untuk direfresh', 'error');
+                throw new Error(data.error || data.message || JSON.stringify(data));
             }
+        } catch (error) {
+            errorBox.innerText = "❌ Gagal: " + error.message;
+            errorBox.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            loading.style.display = 'none';
         }
-
-        // ============ CANCEL DEPOSIT ============
-        async function cancelDeposit() {
-            if (!currentDepositId) {
-                showToast('⚠️ Tidak ada deposit aktif', 'error');
-                return;
-            }
-
-            if (!confirm(`Batalkan deposit #${currentDepositId}?`)) return;
-
-            try {
-                showToast('⏳ Membatalkan...', 'info');
-                debug('Membatalkan deposit #' + currentDepositId);
-                const response = await fetch(`${API_URL}?cancel=${currentDepositId}`, { method: 'POST' });
-                const data = await response.json();
-                debug('Cancel response: ' + JSON.stringify(data));
-
-                if (data.success) {
-                    showToast(`✅ ${data.message}`, 'success');
-                    const h = history.find(h => h.id === currentDepositId);
-                    if (h) { h.status = 'expired';
-                        saveHistory();
-                        renderHistory(); }
-
-                    if (pollingInterval) { clearInterval(pollingInterval);
-                        pollingInterval = null; }
-                    if (countdownInterval) { clearInterval(countdownInterval);
-                        countdownInterval = null; }
-
-                    setTimeout(() => {
-                        document.getElementById('qrSection').classList.remove('show');
-                        currentDepositId = null;
-                    }, 2000);
-                } else {
-                    showToast(`❌ ${data.error || 'Gagal batalkan'}`, 'error');
-                }
-            } catch (error) {
-                showToast(`❌ ${error.message}`, 'error');
-                debug('Cancel error: ' + error.message);
-            }
-        }
-
-        // ============ SHOW RECEIPT ============
-        function showReceipt(data) {
-            const box = document.getElementById('receiptBox');
-            box.innerHTML = `
-                        <div class="receipt-box">
-                            <div style="text-align:center;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ PEMBAYARAN BERHASIL!</div>
-                            <div class="row"><strong>ID Deposit:</strong> <span>#${data.deposit_id}</span></div>
-                            <div class="row"><strong>Nominal:</strong> <span>${data.amount_str || 'Rp ' + data.amount?.toLocaleString('id-ID')}</span></div>
-                            <div class="row"><strong>Saldo Akhir:</strong> <span>${data.balance_str || 'Rp ' + data.balance?.toLocaleString('id-ID')}</span></div>
-                            <div class="row"><strong>Tanggal:</strong> <span>${data.date || new Date().toLocaleString('id-ID')}</span></div>
-                        </div>
-                    `;
-        }
-
-        // ============ CEK STATUS ============
-        async function cekStatusInternal() {
-            if (!currentDepositId) return;
-
-            try {
-                debug('Cek status #' + currentDepositId);
-                const response = await fetch(`${API_URL}?check=${currentDepositId}`);
-                const data = await response.json();
-                const badge = document.getElementById('statusBadge');
-                debug('Status: ' + JSON.stringify(data));
-
-                // ✅ SUKSES!
-                if (data.status === 'success' || data.is_success === true) {
-                    badge.textContent = '✅ Pembayaran Berhasil!';
-                    badge.className = 'status-badge success';
-
-                    showReceipt(data);
-
-                    if (pollingInterval) { clearInterval(pollingInterval);
-                        pollingInterval = null; }
-                    if (countdownInterval) { clearInterval(countdownInterval);
-                        countdownInterval = null; }
-
-                    const h = history.find(h => h.id === currentDepositId);
-                    if (h) { h.status = 'success';
-                        saveHistory();
-                        renderHistory(); }
-
-                    showToast('🎉 Pembayaran BERHASIL! Saldo masuk!', 'success');
-
-                    setTimeout(() => {
-                        document.getElementById('qrSection').classList.remove('show');
-                        currentDepositId = null;
-                    }, 5000);
-                    return;
-                }
-
-                // ⏰ EXPIRED
-                if (data.status === 'expired') {
-                    badge.textContent = '⏰ QR Expired!';
-                    badge.className = 'status-badge expired';
-
-                    const h = history.find(h => h.id === currentDepositId);
-                    if (h) { h.status = 'expired';
-                        saveHistory();
-                        renderHistory(); }
-
-                    if (pollingInterval) { clearInterval(pollingInterval);
-                        pollingInterval = null; }
-                    if (countdownInterval) { clearInterval(countdownInterval);
-                        countdownInterval = null; }
-
-                    setTimeout(() => {
-                        document.getElementById('qrSection').classList.remove('show');
-                        currentDepositId = null;
-                    }, 3000);
-                    return;
-                }
-
-                // ⏳ PENDING
-                if (data.status === 'pending' || data.status === 'WP') {
-                    badge.textContent = '⏳ Menunggu Pembayaran...';
-                    badge.className = 'status-badge pending';
-                }
-
-            } catch (error) {
-                debug('Cek status error: ' + error.message);
-            }
-        }
-
-        async function cekStatus() {
-            if (!currentDepositId) {
-                showToast('⚠️ Belum ada deposit aktif', 'error');
-                return;
-            }
-            showToast('⏳ Mengecek...', 'info');
-            await cekStatusInternal();
-        }
-
-        // ============ BUAT DEPOSIT ============
-        async function buatDeposit() {
-            const btn = document.getElementById('btnBayar');
-            const amountInput = document.getElementById('amountInput');
-            const amount = parseInt(amountInput.value) || 1000;
-
-            if (amount < 1000) {
-                showToast('⚠️ Minimal Rp 1.000', 'error');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span> Memproses...';
-
-            document.getElementById('qrSection').classList.remove('show');
-            document.getElementById('receiptBox').innerHTML = '';
-            document.getElementById('qrError').style.display = 'none';
-
-            if (pollingInterval) { clearInterval(pollingInterval);
-                pollingInterval = null; }
-            if (countdownInterval) { clearInterval(countdownInterval);
-                countdownInterval = null; }
-
-            try {
-                debug('Buat deposit: ' + amount);
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount })
-                });
-
-                const data = await response.json();
-                debug('Deposit response: ' + JSON.stringify(data));
-
-                if (!response.ok || data.error) {
-                    throw new Error(data.error || `HTTP ${response.status}`);
-                }
-
-                if (data.success === false) {
-                    throw new Error(data.error || 'Gagal membuat deposit');
-                }
-
-                if (data.qr_image && data.deposit_id) {
-                    currentDepositId = data.deposit_id;
-                    lastQrData = data;
-
-                    // Simpan history
-                    history.push({
-                        id: data.deposit_id,
-                        total: data.total || amount,
-                        status: 'pending'
-                    });
-                    saveHistory();
-                    renderHistory();
-
-                    // Tampilkan QR
-                    document.getElementById('qrSection').classList.add('show');
-                    document.getElementById('qrImage').innerHTML =
-                        `<img src="${data.qr_image}" alt="QRIS" onerror="document.getElementById('qrError').style.display='block';">`;
-
-                    document.getElementById('depositId').textContent = data.deposit_id;
-                    document.getElementById('totalDisplay').textContent =
-                    `Rp ${(data.total || amount).toLocaleString('id-ID')}`;
-                    document.getElementById('statusBadge').textContent = '⏳ Menunggu Pembayaran';
-                    document.getElementById('statusBadge').className = 'status-badge pending';
-
-                    startCountdown();
-
-                    pollingInterval = setInterval(cekStatusInternal, 8000);
-
-                    showToast(`✅ Deposit #${data.deposit_id} berhasil dibuat! Scan QR untuk bayar.`, 'success');
-
-                } else {
-                    throw new Error('Response tidak valid');
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                showToast(`❌ ${error.message}`, 'error');
-                debug('Error: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '💰 Buat Deposit';
-            }
-        }
-
-        // ============ INIT ============
-        loadHistory();
-        document.getElementById('amountInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') buatDeposit();
-        });
-
-        console.log('💳 Deposit QRIS siap!');
-        console.log('📱 Scan QR dengan OVO, Gopay, DANA');
-        console.log('🔗 API URL:', API_URL);
-    </script>
+    }
+</script>
 
 </body>
 </html>
