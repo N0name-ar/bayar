@@ -101,6 +101,20 @@
             border: 1px solid #ef9a9a;
         }
         
+        .btn-refresh {
+            background: #e3f2fd;
+            color: #0d47a1;
+            border: 1px solid #90caf9;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .btn-group button { flex: 1; margin-top: 0; }
+        
         /* QR Section */
         .qr-section {
             display: none;
@@ -124,6 +138,16 @@
             width: 100%;
             border-radius: 10px;
             border: 2px solid #eee;
+            background: white;
+        }
+        
+        .qr-error {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 8px;
+            color: #e65100;
+            font-size: 13px;
+            margin-top: 8px;
         }
         
         .qr-info {
@@ -232,14 +256,6 @@
             100% { transform: rotate(360deg); }
         }
         
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        
-        .btn-group button { flex: 1; margin-top: 0; }
-        
         .history {
             margin-top: 20px;
             padding-top: 16px;
@@ -266,6 +282,13 @@
         .history-item .status.success { color: #1b5e20; }
         .history-item .status.pending { color: #e65100; }
         .history-item .status.expired { color: #b71c1c; }
+        
+        .fee-info {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -280,7 +303,7 @@
     <div class="form-group">
         <label>Masukkan Nominal Deposit</label>
         <input type="number" id="amountInput" value="1000" min="1000" step="1000">
-        <div style="font-size:12px;color:#999;margin-top:4px;">Minimal Rp 1.000</div>
+        <div class="fee-info">💰 Biaya layanan: Rp 76</div>
     </div>
     
     <!-- Tombol -->
@@ -296,15 +319,24 @@
     <!-- QR Section -->
     <div class="qr-section" id="qrSection">
         <div id="qrImage"></div>
+        <div id="qrError" class="qr-error" style="display:none;">
+            ⚠️ QR Code tidak bisa dimuat. 
+            <a href="#" onclick="refreshQR(); return false;" style="color:#6a3de8;">Refresh QR</a>
+        </div>
         <div class="qr-info">
             <div>ID Deposit: <span class="highlight" id="depositId">-</span></div>
             <div>Total: <span class="highlight" id="totalDisplay">-</span></div>
             <span class="status-badge pending" id="statusBadge">⏳ Menunggu Pembayaran</span>
             <div class="countdown" id="countdown">⏱️ Sisa waktu: 59:59</div>
             <p style="font-size:12px;color:#999;margin-top:8px;">
-                Scan pakai OVO, Gopay, DANA, atau QRIS lain
+                📱 Scan pakai OVO, Gopay, DANA, atau QRIS lain
             </p>
         </div>
+        
+        <!-- Tombol Refresh QR -->
+        <button class="btn-secondary btn-refresh" onclick="refreshQR()" style="margin-top:12px;">
+            🔄 Refresh QR Code
+        </button>
         
         <div id="receiptBox"></div>
     </div>
@@ -328,6 +360,7 @@ let pollingInterval = null;
 let countdownInterval = null;
 let countdownSeconds = 3600;
 let history = [];
+let lastQrData = null;
 
 // ============ LOAD HISTORY ============
 function loadHistory() {
@@ -396,6 +429,22 @@ function startCountdown() {
     }, 1000);
 }
 
+// ============ REFRESH QR ============
+function refreshQR() {
+    if (lastQrData) {
+        const img = document.getElementById('qrImage').querySelector('img');
+        if (img) {
+            // Force reload dengan cache buster
+            const url = lastQrData.qr_image + '?t=' + Date.now();
+            img.src = url;
+            document.getElementById('qrError').style.display = 'none';
+            showToast('🔄 QR Code di-refresh!', 'info');
+        }
+    } else {
+        showToast('⚠️ Tidak ada QR untuk direfresh', 'error');
+    }
+}
+
 // ============ CANCEL DEPOSIT ============
 async function cancelDeposit() {
     if (!currentDepositId) {
@@ -411,7 +460,7 @@ async function cancelDeposit() {
         const data = await response.json();
         
         if (data.success) {
-            showToast(`✅ Deposit #${currentDepositId} dibatalkan`, 'success');
+            showToast(`✅ ${data.message}`, 'success');
             const h = history.find(h => h.id === currentDepositId);
             if (h) { h.status = 'expired'; saveHistory(); renderHistory(); }
             
@@ -435,11 +484,11 @@ function showReceipt(data) {
     const box = document.getElementById('receiptBox');
     box.innerHTML = `
         <div class="receipt-box">
+            <div style="text-align:center;font-weight:700;color:#1b5e20;margin-bottom:8px;">✅ PEMBAYARAN BERHASIL!</div>
             <div class="row"><strong>ID Deposit:</strong> <span>#${data.deposit_id}</span></div>
             <div class="row"><strong>Nominal:</strong> <span>${data.amount_str || 'Rp ' + data.amount?.toLocaleString('id-ID')}</span></div>
             <div class="row"><strong>Saldo Akhir:</strong> <span>${data.balance_str || 'Rp ' + data.balance?.toLocaleString('id-ID')}</span></div>
             <div class="row"><strong>Tanggal:</strong> <span>${data.date || new Date().toLocaleString('id-ID')}</span></div>
-            <div style="text-align:center;margin-top:8px;font-weight:700;color:#1b5e20;">✅ PEMBAYARAN BERHASIL!</div>
         </div>
     `;
 }
@@ -531,6 +580,7 @@ async function buatDeposit() {
     
     document.getElementById('qrSection').classList.remove('show');
     document.getElementById('receiptBox').innerHTML = '';
+    document.getElementById('qrError').style.display = 'none';
     
     if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
@@ -554,6 +604,7 @@ async function buatDeposit() {
         
         if (data.qr_image && data.deposit_id) {
             currentDepositId = data.deposit_id;
+            lastQrData = data;
             
             // Simpan history
             history.push({
@@ -567,7 +618,7 @@ async function buatDeposit() {
             // Tampilkan QR
             document.getElementById('qrSection').classList.add('show');
             document.getElementById('qrImage').innerHTML = 
-                `<img src="${data.qr_image}" alt="QRIS" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%23f5f5f5%22/%3E%3Ctext x=%2250%%25%22 y=%2250%%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2216%22%3EGagal Load QR%3C/text%3E%3C/svg%3E';">`;
+                `<img src="${data.qr_image}" alt="QRIS" onerror="document.getElementById('qrError').style.display='block';">`;
             
             document.getElementById('depositId').textContent = data.deposit_id;
             document.getElementById('totalDisplay').textContent = `Rp ${(data.total || amount).toLocaleString('id-ID')}`;
@@ -578,7 +629,7 @@ async function buatDeposit() {
             
             pollingInterval = setInterval(cekStatusInternal, 8000);
             
-            showToast(`✅ Deposit #${data.deposit_id} berhasil dibuat!`, 'success');
+            showToast(`✅ Deposit #${data.deposit_id} berhasil dibuat! Scan QR untuk bayar.`, 'success');
             
         } else {
             throw new Error('Response tidak valid');
@@ -601,6 +652,7 @@ document.getElementById('amountInput').addEventListener('keypress', function(e) 
 
 console.log('💳 Deposit QRIS siap!');
 console.log('📱 Scan QR dengan OVO, Gopay, DANA');
+console.log('🔄 Klik "Refresh QR" kalau gambar putih');
 </script>
 </body>
 </html>
